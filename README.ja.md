@@ -2,12 +2,66 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · **日本語** · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
-**すでに Chrome ウェブストアに公開している拡張機能**のアップデートを、ターミナルから、あるいは
-Claude Code / Codex に頼むだけで公開できます。ビルド、チェック、パッケージ化、公開中のバージョンとの比較、
-アップロード、審査への提出までを 1 コマンドで行います。
+**Chrome 拡張機能のアップデートを、コマンド 1 つで公開。**
+ビルド、zip 化、アップロード、審査への提出まで自動。アップロードの前に、ストアに却下されるかどうかを教えてくれます。
 
-ただのアップロードスクリプトとの一番の違いは **プリフライト（事前チェック）** です。アップロードする前に、
-ストアに何を理由に却下されるかを教えてくれます。
+コマンドとしても、Claude Code / Codex のスキルとしても使えます。「拡張機能を公開して」と言うだけです。
+
+> すでに公開済みの拡張機能向けです。最初の公開は Chrome のダッシュボードで行ってください。
+
+## 何が解決するか
+
+| これまで | これから |
+|---|---|
+| アップロードは成功したのに、提出で *「does not meet the requirements」* | どの権限にダッシュボードで説明が必要か、コードのどの行で使っているかを先に教えてくれる |
+| あとから読み込むファイルが zip に入らず、機能が壊れる | 自動で見つけて同梱する |
+| 古いビルドをうっかりアップロード | 先にビルドとテストを実行。失敗したらアップロードしない |
+| バージョン番号がストアと重なって却下 | コードとストアの両方を見て、次のバージョンを決める |
+| どの拡張機能に未公開の変更があるか忘れる | 表 1 つで全部わかる |
+
+## はじめかた
+
+**1. インストール**
+
+```bash
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Claude のスキルとして（Codex は ~/.codex/skills）
+sh ~/code/xxd-chrome-publish/scripts/install.sh                       # コマンドとして
+```
+
+**2. ストアのアカウントをつなぐ**（1 回だけ・[詳しい手順](references/setup.md)）
+
+```bash
+xxd-chrome-publish setup --publisher-id <ダッシュボード URL の ID> --service-account <サービスアカウントのメール>
+```
+
+**3. 拡張機能のフォルダごとに ID を登録**（1 回だけ）
+
+```bash
+cd my-extension
+xxd-chrome-publish bind --extension-id <拡張機能 ID またはストアのリンク>
+```
+
+**4. 公開**
+
+```bash
+xxd-chrome-publish
+```
+
+## よく使うコマンド
+
+| やりたいこと | コマンド |
+|---|---|
+| 何も変えずに、何が起きるか確認 | `xxd-chrome-publish preflight` |
+| アップデートを公開 | `xxd-chrome-publish` |
+| ダッシュボードを直してから再提出 | `xxd-chrome-publish submit` |
+| 審査状況を見る | `xxd-chrome-publish status` |
+| 未公開の変更がある拡張機能を探す | `xxd-chrome-publish scan ~/code` |
+| 設定が正しいか確認 | `xxd-chrome-publish doctor` |
+
+Claude Code / Codex なら頼むだけ：*「flomo の拡張機能を公開して」*、*「公開できる拡張機能はどれ？」*
+
+## チェック結果の例
 
 ```
 $ xxd-chrome-publish preflight
@@ -19,77 +73,60 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
   dashboard 1 to-do:
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
-  => NEEDS DASHBOARD — fill the [required] items, Save draft, then publish with --dashboard-ready
+  => NEEDS DASHBOARD
 ```
 
-## なぜ作ったのか
+この例では、新しいサイトへのアクセス権限が見つかりました。リンクを開き、なぜ必要かを 1 文書いて保存し、公開すれば完了です。
 
-Chrome ウェブストア API でできるのは「パッケージのアップロード」と「提出」だけです。権限の使用理由、
-データ使用の開示、プライバシーポリシーの URL、ストアの説明文は **デベロッパー ダッシュボードでしか編集できません**。
-どの CLI（chrome-webstore-upload-cli も含む）も同じ壁にぶつかり、よくある症状は「アップロードは成功したのに、
-提出で `does not meet the requirements` と言われる」というものです。
+## できないこと
 
-このツールは公開中のパッケージをダウンロードして manifest を手元のものと比較し、理由の記入が必要な新しい権限や
-ホストを一覧にします。その権限を使っているコードの行も表示するので、理由は 1 分で書けます。実際にはまりやすい
-パッケージングの落とし穴も解消しています。
+次のものは Google に API がないため、Chrome のダッシュボードで操作します。
 
-- **遅延注入されるファイル** — `chrome.scripting.executeScript({ files: [...] })` や
-  `{ panel: ["build/panel.js"] }` のような書き方で読み込むファイルも含めます。参照をたどるだけの zip ツールは黙って取りこぼします。
-- **古いビルド** — プロジェクトの `build` と `check` スクリプトを先に実行し、失敗したらアップロードしません。
-- **存在しないファイル** — manifest が指しているのに存在しないファイルは、アップロード前に止めます。
-- **バージョンの衝突** — 次のバージョンは手元の manifest とストア（公開中と審査中の両方）から決めるので、
-  ストアのほうが新しくても却下されません。
-- **審査中のバージョン** — 途中で失敗するのではなく、最初に検出します。
+- 最初の公開
+- ストアの説明文とスクリーンショット
+- プライバシータブ：権限の説明、データの使い方、プライバシーポリシーのリンク
 
-## インストール
+何をどこに入力すればいいかは、ツールが正確に教えてくれます。ブラウザの AI エージェントにも代行できません。Chrome は拡張機能がストアのページを操作することを禁止しているためです。
 
-エージェントのスキルとして（Claude Code、Codex など）:
+## 詳細（クリックで開く）
 
-```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
-ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex: ~/.codex/skills
-```
+<details>
+<summary><b>ログイン方法：2 つから選ぶ</b></summary>
 
-クローンをスキルフォルダの外に置いてリンクすれば、`git pull` でその場で更新でき、普通のプロジェクトと
-同じように編集できます。あとは「拡張機能を公開して」「未リリースの変更がある拡張機能は？」と頼むだけです。
+| 方法 | 向いている場面 | 必要なもの |
+|---|---|---|
+| gcloud + サービスアカウント | 自分のパソコン。秘密鍵ファイル不要 | Google Cloud SDK、サービスアカウント |
+| OAuth リフレッシュトークン | CI（GitHub Actions など） | 環境変数 `CWS_CLIENT_ID`、`CWS_CLIENT_SECRET`、`CWS_REFRESH_TOKEN` |
 
-コマンドラインツールとして（Node 18 以上、依存関係なし）:
+⚠️ サービスアカウントはダッシュボードの Account ページにある **service account** 欄に入れます。「Trusted tester accounts」**ではありません**。そちらには API の権限がなく、403 エラーになります。
 
-```bash
-sh ~/code/xxd-chrome-publish/scripts/install.sh   # ~/.local/bin/xxd-chrome-publish にリンク
-```
+詳しい手順：[references/setup.md](references/setup.md)
 
-更新は `git -C ~/code/xxd-chrome-publish pull` だけです。スキルのリンクも CLI もこのクローンを指しています。
+</details>
 
-## 最初の設定（1 回だけ）
+<details>
+<summary><b>すべてのオプション</b></summary>
 
-```bash
-xxd-chrome-publish setup --publisher-id <ダッシュボード URL に含まれる ID>
-xxd-chrome-publish setup --service-account chrome-webstore-publisher@<project>.iam.gserviceaccount.com
-#   または CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN を export（OAuth、CI 向け）
-cd my-extension && xxd-chrome-publish bind --extension-id <拡張機能 ID またはストア URL>
-xxd-chrome-publish doctor
-```
+| オプション | 動作 |
+|---|---|
+| `--minor` / `--major` | 1.2.3 → 1.3.0 / 2.0.0（標準は 1.2.4） |
+| `--set-version 1.5.0` | このバージョンをそのまま使う |
+| `--no-bump` | manifest.json のバージョンを変えない |
+| `--skip-build` / `--skip-checks` | ビルド / テストを実行しない |
+| `--dashboard-ready` | ダッシュボードは入力済み。そのまま進める |
+| `--cancel-pending` | 審査中のバージョンを取り下げて、こちらを提出 |
+| `--upload-only` | アップロードだけして提出しない |
+| `--staged` | 承認後すぐ公開せず、あなたの操作を待つ |
+| `--zip file.zip` | zip を作らず、このファイルをアップロード |
+| `--commit` | 公開後に新しいバージョン番号を git にコミット |
+| `--json` | プログラムで読みやすい JSON で出力 |
 
-2 種類の認証方法の詳しい手順は [references/setup.md](references/setup.md) にあります（英語）。
-サービスアカウントはダッシュボードの Account ページにある **service account** 欄に入れてください。
-同じページの「Trusted tester accounts」は別の欄で、API の権限はありません（ここに入れると 403 になります）。
+終了コード：`0` 完了 · `1` エラー · `2` 別のバージョンが審査中 · `3` 先にダッシュボードの入力が必要
 
-## 使い方
+</details>
 
-```bash
-xxd-chrome-publish preflight        # 何が起きるかを確認するだけ。何も変更しない
-xxd-chrome-publish                  # 公開: ビルド → チェック → パッケージ → 比較 → アップロード → 提出
-xxd-chrome-publish submit           # ダッシュボードを直したあと、アップロード済みの下書きを提出
-xxd-chrome-publish scan ~/code      # 全拡張機能の一覧: 手元とストアのバージョン、審査状況、未リリースのコミット
-xxd-chrome-publish status | pack | cancel | rollout 50
-```
-
-主なオプション: `--minor`、`--major`、`--set-version X`、`--no-bump`、`--skip-build`、`--skip-checks`、
-`--dashboard-ready`、`--cancel-pending`、`--upload-only`、`--staged`、`--zip PATH`、`--commit`、`--json`。
-終了コード: `0` 成功 · `1` エラー · `2` 審査中のバージョンがある · `3` 先にダッシュボードの作業が必要。
-
-拡張機能ごとの設定は `.chrome-publish.json` に書きます:
+<details>
+<summary><b>拡張機能ごとの設定</b>（<code>.chrome-publish.json</code>）</summary>
 
 ```json
 {
@@ -102,16 +139,27 @@ xxd-chrome-publish status | pack | cancel | rollout 50
 }
 ```
 
-## できないこと
+| 項目 | 意味 |
+|---|---|
+| `extensionId` | ストアのリンクにある 32 文字の ID |
+| `build` | ビルドコマンド、または `false`。標準は package.json の `build` スクリプト |
+| `check` | テストコマンド、または `false`。標準は package.json の `check` スクリプト |
+| `packageDir` | zip にするフォルダ。ビルド結果が `dist` などに出る場合に指定 |
+| `include` / `exclude` | 必ず入れる / 絶対に入れないファイル |
 
-初回の公開、ストアの説明文やスクリーンショットの編集、プライバシータブの入力。Google はこれらの API を提供しておらず、
-Chrome はブラウザ拡張機能（AI ブラウザエージェントを含む）がウェブストアのページを操作することも禁止しています。
-代わりに何を入力すればよいかを正確に伝えます。権限の理由の書き方の例は [references/dashboard.md](references/dashboard.md) を参照してください。
+</details>
 
-## 開発
+<details>
+<summary><b>更新と開発</b></summary>
 
 ```bash
-npm test   # ユニットテスト + ローカルの偽ウェブストアに対する E2E テスト
+git -C ~/code/xxd-chrome-publish pull   # 更新（スキルのリンクもコマンドもここを指している）
+npm test                                 # テスト実行（ローカルの偽ストアを使うので実際には公開されない）
 ```
 
-MIT ライセンス。
+審査に通りやすい権限の説明の書き方：[references/dashboard.md](references/dashboard.md) ·
+エラーと対処法：[references/troubleshooting.md](references/troubleshooting.md)
+
+</details>
+
+MIT ライセンス

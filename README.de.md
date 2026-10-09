@@ -2,12 +2,66 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · **Deutsch** · [العربية](README.ar.md)
 
-Veröffentliche Updates für Chrome-Erweiterungen, die **bereits im Chrome Web Store** sind – im Terminal oder
-indem du Claude Code / Codex darum bittest. Ein Befehl baut, prüft, paketiert, vergleicht mit der veröffentlichten
-Version, lädt hoch und reicht zur Überprüfung ein.
+**Updates für deine Chrome-Erweiterungen mit einem einzigen Befehl veröffentlichen.**
+Bauen, zippen, hochladen, zur Prüfung einreichen – und *vor dem Upload* erfahren, ob der Chrome Web Store ablehnen wird.
 
-Der Unterschied zu einem gewöhnlichen Upload-Skript ist der **Vorab-Check (preflight)**: Bevor irgendetwas
-hochgeladen wird, sagt er dir, was der Web Store ablehnen wird.
+Nutzbar als Befehl oder als Skill in Claude Code / Codex: Sag einfach „Veröffentliche meine Erweiterung“.
+
+> Für Erweiterungen, die schon im Store sind. Die allererste Veröffentlichung läuft weiter über das Chrome-Dashboard.
+
+## Was es löst
+
+| Vorher | Mit xxd-chrome-publish |
+|---|---|
+| Der Upload klappt, dann scheitert das Einreichen: *„does not meet the requirements“* | Du erfährst vorher, welche Berechtigung eine Notiz im Dashboard braucht – und welche Codezeile sie nutzt |
+| Dateien, die dein Code erst später lädt, fehlen im Zip – eine Funktion geht kaputt | Sie werden gefunden und eingepackt |
+| Versehentlich wird ein alter Build hochgeladen | Deine Build- und Test-Skripte laufen zuerst; schlagen sie fehl, wird nichts hochgeladen |
+| Die Versionsnummer kollidiert mit dem Store | Die nächste Version wird aus deinem Code und dem Store ermittelt |
+| Du weißt nicht mehr, welche Erweiterungen unveröffentlichte Änderungen haben | Eine Tabelle zeigt alle |
+
+## Schnellstart
+
+**1. Installieren**
+
+```bash
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # als Claude-Skill (Codex: ~/.codex/skills)
+sh ~/code/xxd-chrome-publish/scripts/install.sh                       # als Befehl
+```
+
+**2. Store-Konto verbinden** (einmalig · [Schritt für Schritt](references/setup.md))
+
+```bash
+xxd-chrome-publish setup --publisher-id <ID aus der Dashboard-URL> --service-account <E-Mail>
+```
+
+**3. Jeden Erweiterungsordner verknüpfen** (einmalig)
+
+```bash
+cd meine-erweiterung
+xxd-chrome-publish bind --extension-id <Erweiterungs-ID oder Store-Link>
+```
+
+**4. Veröffentlichen**
+
+```bash
+xxd-chrome-publish
+```
+
+## Alltägliche Befehle
+
+| Du willst | Befehl |
+|---|---|
+| Sehen, was passieren würde, ohne etwas zu ändern | `xxd-chrome-publish preflight` |
+| Ein Update veröffentlichen | `xxd-chrome-publish` |
+| Nach dem Dashboard-Fix erneut einreichen | `xxd-chrome-publish submit` |
+| Den Prüfstatus ansehen | `xxd-chrome-publish status` |
+| Sehen, welche Erweiterungen unveröffentlichte Änderungen haben | `xxd-chrome-publish scan ~/code` |
+| Prüfen, ob die Einrichtung funktioniert | `xxd-chrome-publish doctor` |
+
+In Claude Code / Codex einfach fragen: *„Veröffentliche die flomo-Erweiterung“*, *„Welche Erweiterungen kann ich veröffentlichen?“*
+
+## So sieht eine Prüfung aus
 
 ```
 $ xxd-chrome-publish preflight
@@ -19,78 +73,60 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
   dashboard 1 to-do:
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
-  => NEEDS DASHBOARD — fill the [required] items, Save draft, then publish with --dashboard-ready
+  => NEEDS DASHBOARD
 ```
 
-## Warum
+Hier wurde eine neue Website-Berechtigung gefunden. Link öffnen, in einem Satz erklären, wofür die Erweiterung sie braucht, speichern, veröffentlichen.
 
-Die Chrome-Web-Store-API kann nur ein Paket hochladen und einreichen. Begründungen für Berechtigungen, Angaben zur
-Datennutzung, die URL der Datenschutzerklärung und der Text des Store-Eintrags existieren **nur im
-Entwickler-Dashboard**. Jedes Kommandozeilen-Tool (auch chrome-webstore-upload-cli) stößt an diese Grenze; das
-typische Symptom ist ein erfolgreicher Upload, gefolgt von `publish failed: does not meet the requirements`.
+## Was es nicht kann
 
-Dieses Tool lädt das veröffentlichte Paket herunter, vergleicht dessen Manifest mit deinem und listet die neuen
-Berechtigungen und Hosts auf, die eine Begründung brauchen – samt den Codezeilen, die sie verwenden. So ist die
-Begründung in einer Minute geschrieben. Außerdem behebt es die Paketierungsfehler, die in der Praxis wehtun:
+Dafür hat Google keine API, also bleibt es im Chrome-Dashboard:
 
-- **Bei Bedarf injizierte Dateien**: Dateien, die per `chrome.scripting.executeScript({ files: [...] })` oder über
-  Zuordnungen wie `{ panel: ["build/panel.js"] }` geladen werden, kommen mit ins Paket; Packer, die nur Verweisen folgen, lassen sie stillschweigend weg.
-- **Veraltete Builds**: Die `build`- und `check`-Skripte des Projekts laufen zuerst; schlagen sie fehl, wird nichts hochgeladen.
-- **Fehlende Dateien**: Verweist das Manifest auf eine nicht vorhandene Datei, wird vor dem Upload abgebrochen.
-- **Versionskonflikte**: Die nächste Version wird aus dem lokalen Manifest und dem Store (veröffentlicht und in
-  Prüfung) berechnet – ein Store, der deinem lokalen Stand voraus ist, führt also nicht zur Ablehnung.
-- **Laufende Prüfungen**: werden gleich zu Beginn erkannt, statt mittendrin zu scheitern.
+- die erste Veröffentlichung
+- Store-Beschreibung und Screenshots
+- der Datenschutz-Tab: Notizen zu Berechtigungen, Datennutzung, Link zur Datenschutzerklärung
 
-## Installation
+Das Tool sagt dir genau, was du wo eintragen musst. Ein Browser-Agent kann es dir auch nicht abnehmen: Chrome verbietet Erweiterungen, Store-Seiten zu steuern.
 
-Als Agent-Skill (Claude Code, Codex, …):
+## Details
 
-```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
-ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex: ~/.codex/skills
-```
+<details>
+<summary><b>Anmelden: zwei Wege</b></summary>
 
-Liegt das Repository außerhalb des Skills-Ordners und ist dort nur verlinkt, aktualisiert `git pull` den Skill an
-Ort und Stelle, und du kannst ihn wie jedes andere Projekt bearbeiten. Danach genügt „Veröffentliche meine
-Erweiterung“ oder „Welche meiner Erweiterungen haben unveröffentlichte Änderungen?“.
+| Weg | Gut für | Was du brauchst |
+|---|---|---|
+| gcloud + Dienstkonto | den eigenen Rechner, ohne geheime Dateien | Google Cloud SDK, ein Dienstkonto |
+| OAuth-Refresh-Token | CI (z. B. GitHub Actions) | `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN` |
 
-Als Kommandozeilen-Tool (Node 18+, keine Abhängigkeiten):
+⚠️ Das Dienstkonto gehört in das Feld **service account** auf der Account-Seite des Dashboards – **nicht** in „Trusted tester accounts“. Dieses Feld gibt keinen API-Zugriff, und du bekommst 403-Fehler.
 
-```bash
-sh ~/code/xxd-chrome-publish/scripts/install.sh   # verlinkt ~/.local/bin/xxd-chrome-publish
-```
+Alle Schritte: [references/setup.md](references/setup.md)
 
-Später aktualisieren mit `git -C ~/code/xxd-chrome-publish pull` – Skill-Link und Befehl zeigen beide auf das Repository.
+</details>
 
-## Einmalige Einrichtung
+<details>
+<summary><b>Alle Optionen</b></summary>
 
-```bash
-xxd-chrome-publish setup --publisher-id <ID aus der Dashboard-URL>
-xxd-chrome-publish setup --service-account chrome-webstore-publisher@<projekt>.iam.gserviceaccount.com
-#   …oder CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN exportieren (OAuth, gut für CI)
-cd meine-erweiterung && xxd-chrome-publish bind --extension-id <ID oder Store-URL>
-xxd-chrome-publish doctor
-```
+| Option | Wirkung |
+|---|---|
+| `--minor` / `--major` | 1.2.3 → 1.3.0 / 2.0.0 (Standard ist 1.2.4) |
+| `--set-version 1.5.0` | genau diese Version verwenden |
+| `--no-bump` | die Version aus manifest.json behalten |
+| `--skip-build` / `--skip-checks` | Build / Tests nicht ausführen |
+| `--dashboard-ready` | Dashboard ist ausgefüllt – weitermachen |
+| `--cancel-pending` | die Version in Prüfung zurückziehen und diese einreichen |
+| `--upload-only` | hochladen, aber nicht einreichen |
+| `--staged` | nach der Freigabe warten, bis du veröffentlichst |
+| `--zip datei.zip` | dieses Zip hochladen, statt eins zu erstellen |
+| `--commit` | danach die neue Versionsnummer per git committen |
+| `--json` | maschinenlesbare Ausgabe |
 
-Die einzelnen Schritte für beide Anmeldearten stehen in [references/setup.md](references/setup.md) (Englisch).
-Das Dienstkonto gehört in das Feld **service account** auf der Account-Seite des Dashboards, nicht in „Trusted
-tester accounts“ – das ist ein anderes Feld ohne API-Zugriff, und ein Eintrag dort führt zu 403-Fehlern.
+Exit-Codes: `0` fertig · `1` Fehler · `2` eine andere Version wird geprüft · `3` zuerst das Dashboard ausfüllen
 
-## Verwendung
+</details>
 
-```bash
-xxd-chrome-publish preflight        # zeigt, was passieren würde; ändert nichts
-xxd-chrome-publish                  # veröffentlichen: bauen → prüfen → paketieren → vergleichen → hochladen → einreichen
-xxd-chrome-publish submit           # nach dem Dashboard: den hochgeladenen Entwurf einreichen, ohne erneuten Upload
-xxd-chrome-publish scan ~/code      # alle Erweiterungen: lokale und Store-Version, Prüfstatus, unveröffentlichte Commits
-xxd-chrome-publish status | pack | cancel | rollout 50
-```
-
-Optionen: `--minor`, `--major`, `--set-version X`, `--no-bump`, `--skip-build`, `--skip-checks`,
-`--dashboard-ready`, `--cancel-pending`, `--upload-only`, `--staged`, `--zip PFAD`, `--commit`, `--json`.
-Exit-Codes: `0` ok · `1` Fehler · `2` eine Prüfung läuft · `3` zuerst ist Arbeit im Dashboard nötig.
-
-Einstellungen pro Erweiterung stehen in `.chrome-publish.json`:
+<details>
+<summary><b>Einstellungen pro Erweiterung</b> (<code>.chrome-publish.json</code>)</summary>
 
 ```json
 {
@@ -103,17 +139,27 @@ Einstellungen pro Erweiterung stehen in `.chrome-publish.json`:
 }
 ```
 
-## Was es nicht kann
+| Feld | Bedeutung |
+|---|---|
+| `extensionId` | die 32-stellige ID aus dem Store-Link |
+| `build` | Build-Befehl oder `false`. Standard: das `build`-Skript in package.json |
+| `check` | Test-Befehl oder `false`. Standard: das `check`-Skript in package.json |
+| `packageDir` | Ordner, der gezippt wird, wenn dein Build z. B. nach `dist` schreibt |
+| `include` / `exclude` | Dateien, die immer / nie ins Paket kommen |
 
-Den ersten Eintrag anlegen, Text oder Screenshots des Store-Eintrags ändern oder den Datenschutz-Tab ausfüllen:
-Google bietet dafür keine API, und Chrome verbietet jeder Browser-Erweiterung (auch KI-Browser-Agenten), Seiten
-des Web Store zu steuern. Stattdessen sagt dir das Tool genau, was du eintragen musst; Beispiele für Begründungen
-findest du in [references/dashboard.md](references/dashboard.md).
+</details>
 
-## Entwicklung
+<details>
+<summary><b>Aktualisieren und entwickeln</b></summary>
 
 ```bash
-npm test   # Unit-Tests + End-to-End-Tests gegen einen lokalen Fake-Web-Store
+git -C ~/code/xxd-chrome-publish pull   # aktualisieren (Skill-Link und Befehl zeigen beide hierher)
+npm test                                 # Tests ausführen (mit einem lokalen Fake-Store)
 ```
 
-MIT-Lizenz.
+Berechtigungsnotizen, die durch die Prüfung kommen: [references/dashboard.md](references/dashboard.md) ·
+Fehlermeldungen und Lösungen: [references/troubleshooting.md](references/troubleshooting.md)
+
+</details>
+
+MIT-Lizenz

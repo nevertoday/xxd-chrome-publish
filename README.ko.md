@@ -2,11 +2,66 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · **한국어** · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
-**이미 Chrome 웹 스토어에 등록된 확장 프로그램**의 업데이트를 터미널에서, 또는 Claude Code / Codex에게
-말 한마디로 배포합니다. 빌드, 검사, 패키징, 현재 공개된 버전과의 비교, 업로드, 심사 제출까지 명령 하나로 끝납니다.
+**명령 하나로 Chrome 확장 프로그램 업데이트를 배포하세요.**
+빌드, 압축, 업로드, 심사 제출까지 자동입니다. 업로드하기 전에 스토어가 거부할지 먼저 알려 줍니다.
 
-일반적인 업로드 스크립트와 가장 다른 점은 **사전 점검(preflight)** 입니다. 업로드하기 전에, 스토어가 무엇 때문에
-제출을 거부할지 먼저 알려 줍니다.
+명령어로 써도 되고, Claude Code / Codex 스킬로 써도 됩니다. "확장 프로그램 배포해 줘"라고 말하기만 하면 됩니다.
+
+> 이미 등록된 확장 프로그램용입니다. 처음 등록은 Chrome 대시보드에서 하세요.
+
+## 무엇이 해결되나
+
+| 예전 | 이제 |
+|---|---|
+| 업로드는 됐는데 제출에서 *"does not meet the requirements"* | 어떤 권한에 대시보드 설명이 필요한지, 코드 몇 번째 줄에서 쓰는지 먼저 알려 줌 |
+| 나중에 불러오는 파일이 zip에서 빠져서 기능이 고장 남 | 자동으로 찾아서 함께 압축 |
+| 오래된 빌드를 실수로 업로드 | 빌드와 테스트를 먼저 실행하고, 실패하면 업로드하지 않음 |
+| 버전 번호가 스토어와 겹쳐서 거부됨 | 코드와 스토어를 모두 보고 다음 버전을 정함 |
+| 어떤 확장 프로그램에 배포 안 한 변경이 있는지 잊어버림 | 표 하나로 전부 확인 |
+
+## 시작하기
+
+**1. 설치**
+
+```bash
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Claude 스킬로 (Codex는 ~/.codex/skills)
+sh ~/code/xxd-chrome-publish/scripts/install.sh                       # 명령어로
+```
+
+**2. 스토어 계정 연결** (한 번만 · [자세한 방법](references/setup.md))
+
+```bash
+xxd-chrome-publish setup --publisher-id <대시보드 URL의 ID> --service-account <서비스 계정 이메일>
+```
+
+**3. 확장 프로그램 폴더마다 ID 연결** (한 번만)
+
+```bash
+cd my-extension
+xxd-chrome-publish bind --extension-id <확장 프로그램 ID 또는 스토어 링크>
+```
+
+**4. 배포**
+
+```bash
+xxd-chrome-publish
+```
+
+## 자주 쓰는 명령
+
+| 하고 싶은 일 | 명령 |
+|---|---|
+| 아무것도 바꾸지 않고 결과만 미리 보기 | `xxd-chrome-publish preflight` |
+| 업데이트 배포 | `xxd-chrome-publish` |
+| 대시보드를 고친 뒤 다시 제출 | `xxd-chrome-publish submit` |
+| 심사 상태 확인 | `xxd-chrome-publish status` |
+| 배포 안 한 변경이 있는 확장 프로그램 찾기 | `xxd-chrome-publish scan ~/code` |
+| 설정이 맞는지 확인 | `xxd-chrome-publish doctor` |
+
+Claude Code / Codex에서는 말만 하세요: *"flomo 확장 프로그램 배포해 줘"*, *"배포할 수 있는 확장 프로그램 뭐 있어?"*
+
+## 검사 결과 예시
 
 ```
 $ xxd-chrome-publish preflight
@@ -18,75 +73,60 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
   dashboard 1 to-do:
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
-  => NEEDS DASHBOARD — fill the [required] items, Save draft, then publish with --dashboard-ready
+  => NEEDS DASHBOARD
 ```
 
-## 왜 만들었나
+이번 검사에서는 새 사이트 접근 권한이 발견됐습니다. 링크를 열고 왜 필요한지 한 문장 쓰고 저장한 다음 배포하면 됩니다.
 
-Chrome 웹 스토어 API로 할 수 있는 일은 "패키지 업로드"와 "제출"뿐입니다. 권한 사용 사유, 데이터 사용 공개,
-개인정보처리방침 URL, 스토어 설명은 **개발자 대시보드에서만 수정할 수 있습니다**. 어떤 CLI(chrome-webstore-upload-cli 포함)도
-이 벽을 넘지 못하며, 흔한 증상은 "업로드는 성공했는데 제출할 때 `does not meet the requirements` 오류가 나는" 것입니다.
+## 할 수 없는 것
 
-이 도구는 공개된 패키지를 내려받아 manifest를 로컬 버전과 비교하고, 사유 작성이 필요한 새 권한과 호스트를 목록으로
-보여 줍니다. 그 권한을 사용하는 코드 줄도 함께 표시하므로 사유는 1분이면 씁니다. 실제로 자주 겪는 패키징 문제도 해결합니다.
+아래 항목은 Google이 API를 제공하지 않아서 Chrome 대시보드에서 해야 합니다.
 
-- **지연 주입 파일** — `chrome.scripting.executeScript({ files: [...] })`나 `{ panel: ["build/panel.js"] }` 같은
-  방식으로 불러오는 파일도 포함합니다. 참조만 따라가는 zip 도구는 이런 파일을 조용히 빠뜨립니다.
-- **오래된 빌드** — 프로젝트의 `build`, `check` 스크립트를 먼저 실행하고, 실패하면 업로드하지 않습니다.
-- **없는 파일** — manifest가 가리키지만 존재하지 않는 파일은 업로드 전에 막습니다.
-- **버전 충돌** — 다음 버전을 로컬 manifest와 스토어(공개 버전과 심사 중 버전 모두)를 함께 보고 정하므로,
-  스토어 쪽이 더 최신이어도 거부되지 않습니다.
-- **심사 중인 버전** — 도중에 실패하지 않고 처음부터 알려 줍니다.
+- 처음 등록
+- 스토어 설명과 스크린샷
+- 개인정보 탭: 권한 설명, 데이터 사용, 개인정보처리방침 링크
 
-## 설치
+무엇을 어디에 입력하면 되는지는 도구가 정확히 알려 줍니다. 브라우저 AI 에이전트도 대신 입력할 수 없습니다. Chrome이 확장 프로그램의 스토어 페이지 조작을 막기 때문입니다.
 
-에이전트 스킬로 (Claude Code, Codex 등):
+## 자세히 (클릭해서 열기)
 
-```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
-ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex: ~/.codex/skills
-```
+<details>
+<summary><b>로그인 방법: 둘 중 하나</b></summary>
 
-저장소를 스킬 폴더 밖에 두고 링크하면 `git pull`로 그 자리에서 스킬이 업데이트되고, 일반 프로젝트처럼 수정할 수
-있습니다. 그다음에는 "확장 프로그램 배포해 줘", "아직 배포 안 한 변경이 있는 확장 프로그램은?"이라고 말하기만 하면 됩니다.
+| 방법 | 적합한 곳 | 필요한 것 |
+|---|---|---|
+| gcloud + 서비스 계정 | 내 컴퓨터. 비밀 키 파일 없음 | Google Cloud SDK, 서비스 계정 |
+| OAuth 리프레시 토큰 | CI (GitHub Actions 등) | 환경 변수 `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN` |
 
-명령줄 도구로 (Node 18 이상, 의존성 없음):
+⚠️ 서비스 계정은 대시보드 Account 페이지의 **service account** 칸에 넣어야 합니다. "Trusted tester accounts"가 **아닙니다**. 그 칸에는 API 권한이 없어서 403 오류가 납니다.
 
-```bash
-sh ~/code/xxd-chrome-publish/scripts/install.sh   # ~/.local/bin/xxd-chrome-publish 로 링크
-```
+전체 절차: [references/setup.md](references/setup.md)
 
-업데이트는 `git -C ~/code/xxd-chrome-publish pull` 한 줄이면 됩니다. 스킬 링크와 CLI 모두 이 저장소를 가리킵니다.
+</details>
 
-## 최초 설정 (한 번만)
+<details>
+<summary><b>전체 옵션</b></summary>
 
-```bash
-xxd-chrome-publish setup --publisher-id <대시보드 URL에 있는 ID>
-xxd-chrome-publish setup --service-account chrome-webstore-publisher@<project>.iam.gserviceaccount.com
-#   또는 CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN 환경 변수 설정 (OAuth, CI에 적합)
-cd my-extension && xxd-chrome-publish bind --extension-id <확장 프로그램 ID 또는 스토어 URL>
-xxd-chrome-publish doctor
-```
+| 옵션 | 하는 일 |
+|---|---|
+| `--minor` / `--major` | 1.2.3 → 1.3.0 / 2.0.0 (기본은 1.2.4) |
+| `--set-version 1.5.0` | 이 버전을 그대로 사용 |
+| `--no-bump` | manifest.json의 버전을 바꾸지 않음 |
+| `--skip-build` / `--skip-checks` | 빌드 / 테스트를 실행하지 않음 |
+| `--dashboard-ready` | 대시보드 입력 완료, 계속 진행 |
+| `--cancel-pending` | 심사 중인 버전을 취소하고 이 버전을 제출 |
+| `--upload-only` | 업로드만 하고 제출하지 않음 |
+| `--staged` | 승인 후 바로 공개하지 않고 직접 공개할 때까지 대기 |
+| `--zip file.zip` | zip을 만들지 않고 이 파일을 업로드 |
+| `--commit` | 배포 후 새 버전 번호를 git에 커밋 |
+| `--json` | 프로그램이 읽기 쉬운 JSON으로 출력 |
 
-두 가지 인증 방식의 자세한 절차는 [references/setup.md](references/setup.md)(영어)에 있습니다.
-서비스 계정은 대시보드 Account 페이지의 **service account** 칸에 넣어야 합니다. 같은 페이지의
-"Trusted tester accounts"는 다른 칸이며 API 권한이 없습니다(여기에 넣으면 계속 403이 납니다).
+종료 코드: `0` 완료 · `1` 오류 · `2` 다른 버전이 심사 중 · `3` 대시보드 입력이 먼저 필요
 
-## 사용법
+</details>
 
-```bash
-xxd-chrome-publish preflight        # 무슨 일이 일어날지 확인만 하고 아무것도 바꾸지 않음
-xxd-chrome-publish                  # 배포: 빌드 → 검사 → 패키징 → 비교 → 업로드 → 제출
-xxd-chrome-publish submit           # 대시보드를 고친 뒤, 이미 업로드된 초안을 제출
-xxd-chrome-publish scan ~/code      # 전체 확장 프로그램 현황: 로컬/스토어 버전, 심사 상태, 미배포 커밋
-xxd-chrome-publish status | pack | cancel | rollout 50
-```
-
-주요 옵션: `--minor`, `--major`, `--set-version X`, `--no-bump`, `--skip-build`, `--skip-checks`,
-`--dashboard-ready`, `--cancel-pending`, `--upload-only`, `--staged`, `--zip PATH`, `--commit`, `--json`.
-종료 코드: `0` 성공 · `1` 오류 · `2` 심사 중인 버전 있음 · `3` 대시보드 작업이 먼저 필요함.
-
-확장 프로그램별 설정은 `.chrome-publish.json`에 씁니다:
+<details>
+<summary><b>확장 프로그램별 설정</b> (<code>.chrome-publish.json</code>)</summary>
 
 ```json
 {
@@ -99,16 +139,27 @@ xxd-chrome-publish status | pack | cancel | rollout 50
 }
 ```
 
-## 할 수 없는 것
+| 항목 | 의미 |
+|---|---|
+| `extensionId` | 스토어 링크에 있는 32자 ID |
+| `build` | 빌드 명령 또는 `false`. 기본값은 package.json의 `build` 스크립트 |
+| `check` | 테스트 명령 또는 `false`. 기본값은 package.json의 `check` 스크립트 |
+| `packageDir` | 압축할 폴더. 빌드 결과가 `dist` 등에 생길 때 지정 |
+| `include` / `exclude` | 항상 넣을 / 절대 넣지 않을 파일 |
 
-최초 등록, 스토어 설명과 스크린샷 수정, 개인정보 탭 작성. Google은 이를 위한 API를 제공하지 않고, Chrome은
-브라우저 확장 프로그램(AI 브라우저 에이전트 포함)이 웹 스토어 페이지를 조작하는 것도 막습니다. 대신 무엇을 입력해야
-하는지 정확히 알려 줍니다. 권한 사유 작성 예시는 [references/dashboard.md](references/dashboard.md)를 참고하세요.
+</details>
 
-## 개발
+<details>
+<summary><b>업데이트와 개발</b></summary>
 
 ```bash
-npm test   # 단위 테스트 + 로컬 가짜 웹 스토어를 대상으로 한 E2E 테스트
+git -C ~/code/xxd-chrome-publish pull   # 업데이트 (스킬 링크와 명령 모두 여기를 가리킴)
+npm test                                 # 테스트 실행 (로컬 가짜 스토어를 써서 실제로 배포되지 않음)
 ```
 
-MIT 라이선스.
+심사를 잘 통과하는 권한 설명 쓰는 법: [references/dashboard.md](references/dashboard.md) ·
+오류와 해결 방법: [references/troubleshooting.md](references/troubleshooting.md)
+
+</details>
+
+MIT 라이선스

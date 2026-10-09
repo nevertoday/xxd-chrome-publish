@@ -4,10 +4,82 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · **العربية**
 
-انشر تحديثات إضافات Chrome **المنشورة مسبقًا على سوق Chrome الإلكتروني** من سطر الأوامر، أو اطلب ذلك من
-Claude Code أو Codex. أمر واحد يبني الإضافة ويفحصها ويحزمها، ثم يقارنها بالنسخة المنشورة، ويرفعها، ويرسلها للمراجعة.
+**انشر تحديثات إضافات Chrome بأمر واحد.**
+تبني الإضافة وتضغطها وترفعها وترسلها للمراجعة، وتخبرك *قبل الرفع* إن كان سوق Chrome الإلكتروني سيرفضها.
 
-أهم ما يميّزها عن سكربتات الرفع العادية هو **الفحص المسبق (preflight)**: قبل رفع أي شيء، تخبرك بما سيرفضه المتجر.
+استخدمها كأمر، أو كمهارة في Claude Code / Codex: قل فقط «انشر إضافتي».
+
+> للإضافات المنشورة مسبقًا فقط. النشر لأول مرة ما زال يتم من لوحة تحكم Chrome.
+
+## ماذا تحل؟
+
+| قبل | مع xxd-chrome-publish |
+|---|---|
+| ينجح الرفع ثم يفشل الإرسال: *«does not meet the requirements»* | تعرف أولًا أي إذن يحتاج إلى شرح في لوحة التحكم، وأي سطر في الكود يستخدمه |
+| ملفات يحمّلها الكود لاحقًا لا تدخل الحزمة، فتتعطل ميزة | تُكتشف وتُضاف تلقائيًا |
+| رفع نسخة بناء قديمة بالخطأ | تعمل سكربتات البناء والاختبار أولًا، وإن فشلت لا يُرفع شيء |
+| رقم الإصدار يتعارض مع المتجر | يُحسب الإصدار التالي من الكود والمتجر معًا |
+| تنسى أي الإضافات فيها تغييرات لم تُنشر | جدول واحد يعرضها كلها |
+
+## البدء السريع
+
+**1. التثبيت**
+
+</div>
+
+```bash
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # as a Claude skill (Codex: ~/.codex/skills)
+sh ~/code/xxd-chrome-publish/scripts/install.sh                       # as a command
+```
+
+<div dir="rtl">
+
+**2. اربط حساب المتجر** (مرة واحدة · [الخطوات بالتفصيل](references/setup.md))
+
+</div>
+
+```bash
+xxd-chrome-publish setup --publisher-id <ID from the dashboard URL> --service-account <email>
+```
+
+<div dir="rtl">
+
+**3. اربط كل مجلد إضافة بمعرّفها** (مرة واحدة)
+
+</div>
+
+```bash
+cd my-extension
+xxd-chrome-publish bind --extension-id <extension ID or store link>
+```
+
+<div dir="rtl">
+
+**4. انشر**
+
+</div>
+
+```bash
+xxd-chrome-publish
+```
+
+<div dir="rtl">
+
+## أوامر يومية
+
+| تريد أن | نفّذ |
+|---|---|
+| ترى ما سيحدث دون تغيير أي شيء | `xxd-chrome-publish preflight` |
+| تنشر تحديثًا | `xxd-chrome-publish` |
+| تعيد الإرسال بعد إصلاح لوحة التحكم | `xxd-chrome-publish submit` |
+| تتابع حالة المراجعة | `xxd-chrome-publish status` |
+| تعرف أي الإضافات فيها تغييرات لم تُنشر | `xxd-chrome-publish scan ~/code` |
+| تتأكد أن الإعداد يعمل | `xxd-chrome-publish doctor` |
+
+في Claude Code / Codex اطلب فقط: *«انشر إضافة flomo»*، *«أي إضافاتي جاهزة للنشر؟»*
+
+## كيف يبدو الفحص
 
 </div>
 
@@ -21,96 +93,70 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
   dashboard 1 to-do:
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
-  => NEEDS DASHBOARD — fill the [required] items, Save draft, then publish with --dashboard-ready
+  => NEEDS DASHBOARD
 ```
 
 <div dir="rtl">
 
-## لماذا؟
+وجد هذا الفحص إذنًا جديدًا للوصول إلى موقع. افتح الرابط، واكتب جملة واحدة عن سبب حاجة الإضافة إليه، واحفظ، ثم انشر.
 
-واجهة برمجة سوق Chrome الإلكتروني لا تستطيع إلا رفع الحزمة وإرسالها للمراجعة. أمّا مبرّرات الأذونات، وإفصاحات
-استخدام البيانات، ورابط سياسة الخصوصية، ونص صفحة المتجر، فلا يمكن تعديلها **إلا من لوحة تحكم المطوّر**.
-كل أدوات سطر الأوامر (ومنها chrome-webstore-upload-cli) تصطدم بهذا الحد، والعرَض المعتاد هو أن ينجح الرفع ثم يفشل
-الإرسال برسالة `does not meet the requirements`.
+## ما لا تستطيع فعله
 
-تنزّل هذه الأداة الحزمة المنشورة، وتقارن ملف manifest فيها بملفك المحلي، وتعرض الأذونات والنطاقات الجديدة التي تحتاج
-إلى مبرّر، مع أسطر الكود التي تستخدمها، فتكتب المبرّر في دقيقة واحدة. كما تعالج أخطاء التحزيم الشائعة:
+لا توفّر Google واجهة برمجية لهذه الأمور، فتبقى في لوحة تحكم Chrome:
 
-- **الملفات المحقونة عند الحاجة**: تُضمَّن الملفات المحمّلة عبر `chrome.scripting.executeScript({ files: [...] })`
-  أو عبر خرائط مثل `{ panel: ["build/panel.js"] }`، بينما تُسقطها أدوات الضغط التي تتبع المراجع فقط دون أي تنبيه.
-- **البناء القديم**: تُشغَّل سكربتات `build` و`check` الخاصة بالمشروع أولًا، وإذا فشلت لا يُرفع شيء.
-- **الملفات المفقودة**: إذا أشار manifest إلى ملف غير موجود، تتوقف الأداة قبل الرفع.
-- **تعارض الإصدارات**: يُحسب الإصدار التالي من manifest المحلي ومن المتجر معًا (المنشور وقيد المراجعة)، فلا يُرفض
-  الإرسال حتى لو كان المتجر أحدث من نسختك المحلية.
-- **مراجعة جارية**: تُكتشف من البداية بدل أن يفشل التنفيذ في منتصفه.
+- النشر لأول مرة
+- وصف المتجر ولقطات الشاشة
+- تبويب الخصوصية: شرح الأذونات، واستخدام البيانات، ورابط سياسة الخصوصية
 
-## التثبيت
+تخبرك الأداة بالضبط بما تكتبه وأين. ولا يستطيع وكيل المتصفح فعل ذلك نيابة عنك أيضًا، لأن Chrome يمنع الإضافات من التحكم في صفحات المتجر.
 
-كمهارة لوكيل ذكي (Claude Code، Codex، …):
+## التفاصيل
 
 </div>
 
-```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
-ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex: ~/.codex/skills
-```
+<details>
+<summary><b>تسجيل الدخول: طريقتان</b></summary>
 
 <div dir="rtl">
 
-وضع المستودع خارج مجلد المهارات ثم ربطه برابط رمزي يعني أن `git pull` يحدّث المهارة في مكانها، ويمكنك تعديلها
-كأي مشروع آخر. بعد ذلك يكفي أن تقول: «انشر إضافتي» أو «أي إضافاتي فيها تغييرات لم تُنشر بعد؟».
+| الطريقة | مناسبة لـ | ماذا تحتاج |
+|---|---|---|
+| gcloud + حساب خدمة | جهازك الشخصي، دون ملفات سرية | Google Cloud SDK وحساب خدمة |
+| رمز تحديث OAuth | التكامل المستمر (مثل GitHub Actions) | `CWS_CLIENT_ID` و`CWS_CLIENT_SECRET` و`CWS_REFRESH_TOKEN` |
 
-كأداة سطر أوامر (Node 18 أو أحدث، بلا أي اعتماديات):
+⚠️ ضع حساب الخدمة في حقل **service account** في صفحة Account بلوحة التحكم، **وليس** في «Trusted tester accounts». ذلك الحقل لا يمنح صلاحية الواجهة البرمجية، وستظهر أخطاء 403.
+
+الخطوات كاملة: [references/setup.md](references/setup.md)
 
 </div>
+</details>
 
-```bash
-sh ~/code/xxd-chrome-publish/scripts/install.sh   # ينشئ الرابط ~/.local/bin/xxd-chrome-publish
-```
+<details>
+<summary><b>كل الخيارات</b></summary>
 
 <div dir="rtl">
 
-للتحديث لاحقًا: `git -C ~/code/xxd-chrome-publish pull`، فرابط المهارة وأداة سطر الأوامر يشيران كلاهما إلى هذا المستودع.
+| الخيار | ماذا يفعل |
+|---|---|
+| `--minor` / `--major` | 1.2.3 ← 1.3.0 / 2.0.0 (الافتراضي 1.2.4) |
+| `--set-version 1.5.0` | يستخدم هذا الإصدار بالضبط |
+| `--no-bump` | يُبقي الإصدار الموجود في manifest.json |
+| `--skip-build` / `--skip-checks` | لا يشغّل البناء / الاختبارات |
+| `--dashboard-ready` | لوحة التحكم جاهزة، تابِع |
+| `--cancel-pending` | يسحب الإصدار قيد المراجعة ويرسل هذا بدلًا منه |
+| `--upload-only` | يرفع دون إرسال للمراجعة |
+| `--staged` | بعد الموافقة ينتظر حتى تنشره بنفسك |
+| `--zip file.zip` | يرفع هذا الملف بدل إنشاء حزمة جديدة |
+| `--commit` | يحفظ رقم الإصدار الجديد في git بعد الانتهاء |
+| `--json` | مخرجات تقرؤها البرامج |
 
-## الإعداد (مرة واحدة)
-
-</div>
-
-```bash
-xxd-chrome-publish setup --publisher-id <المعرّف الموجود في رابط لوحة التحكم>
-xxd-chrome-publish setup --service-account chrome-webstore-publisher@<project>.iam.gserviceaccount.com
-#   أو صدّر CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN (OAuth، مناسب لـ CI)
-cd my-extension && xxd-chrome-publish bind --extension-id <معرّف الإضافة أو رابطها في المتجر>
-xxd-chrome-publish doctor
-```
-
-<div dir="rtl">
-
-الخطوات التفصيلية لطريقتي المصادقة موجودة في [references/setup.md](references/setup.md) (بالإنجليزية).
-ضع حساب الخدمة في حقل **service account** في صفحة Account بلوحة التحكم، لا في حقل «Trusted tester accounts»
-الموجود في الصفحة نفسها؛ فذلك حقل مختلف لا يمنح أي صلاحية على الواجهة البرمجية، ووضعه هناك يسبب الخطأ 403.
-
-## الاستخدام
+رموز الخروج: `0` تم · `1` خطأ · `2` إصدار آخر قيد المراجعة · `3` أكمل لوحة التحكم أولًا
 
 </div>
+</details>
 
-```bash
-xxd-chrome-publish preflight        # يعرض ما سيحدث فقط، دون تغيير أي شيء
-xxd-chrome-publish                  # النشر: بناء ← فحص ← تحزيم ← مقارنة ← رفع ← إرسال
-xxd-chrome-publish submit           # بعد إكمال لوحة التحكم: إرسال المسودة المرفوعة دون رفعها مجددًا
-xxd-chrome-publish scan ~/code      # كل الإضافات: الإصدار المحلي مقابل المتجر، حالة المراجعة، الالتزامات غير المنشورة
-xxd-chrome-publish status | pack | cancel | rollout 50
-```
-
-<div dir="rtl">
-
-خيارات مفيدة: `--minor` و`--major` و`--set-version X` و`--no-bump` و`--skip-build` و`--skip-checks`
-و`--dashboard-ready` و`--cancel-pending` و`--upload-only` و`--staged` و`--zip PATH` و`--commit` و`--json`.
-رموز الخروج: `0` نجاح · `1` خطأ · `2` يوجد إصدار قيد المراجعة · `3` يلزم إكمال لوحة التحكم أولًا.
-
-إعدادات كل إضافة تُكتب في `.chrome-publish.json`:
-
-</div>
+<details>
+<summary><b>إعدادات كل إضافة</b> (<code>.chrome-publish.json</code>)</summary>
 
 ```json
 {
@@ -125,23 +171,35 @@ xxd-chrome-publish status | pack | cancel | rollout 50
 
 <div dir="rtl">
 
-## ما لا تفعله
-
-النشر لأول مرة، وتعديل نص صفحة المتجر أو لقطات الشاشة، وتعبئة تبويب الخصوصية. لا توفّر Google واجهة برمجية لهذه
-الأمور، كما يمنع Chrome أي إضافة متصفح (بما فيها وكلاء التصفح بالذكاء الاصطناعي) من التحكم في صفحات المتجر.
-بدلًا من ذلك تخبرك الأداة بالضبط بما يجب إدخاله؛ وتجد أمثلة على كتابة مبرّرات الأذونات في
-[references/dashboard.md](references/dashboard.md).
-
-## التطوير
+| الحقل | المعنى |
+|---|---|
+| `extensionId` | المعرّف المكوّن من 32 حرفًا في رابط المتجر |
+| `build` | أمر البناء أو `false`. الافتراضي: سكربت `build` في package.json |
+| `check` | أمر الاختبار أو `false`. الافتراضي: سكربت `check` في package.json |
+| `packageDir` | المجلد الذي يُضغط، إن كان البناء يكتب في `dist` مثلًا |
+| `include` / `exclude` | ملفات تُضاف دائمًا / لا تُضاف أبدًا |
 
 </div>
+</details>
+
+<details>
+<summary><b>التحديث والتطوير</b></summary>
 
 ```bash
-npm test   # اختبارات الوحدات + اختبارات شاملة على متجر وهمي محلي
+git -C ~/code/xxd-chrome-publish pull   # update (the skill link and the command both point here)
+npm test                                 # run the tests (uses a fake local store)
 ```
 
 <div dir="rtl">
 
-مرخّصة بموجب MIT.
+كيف تكتب شرح أذونات يقبله المراجعون: [references/dashboard.md](references/dashboard.md) ·
+رسائل الأخطاء وحلولها: [references/troubleshooting.md](references/troubleshooting.md)
+
+</div>
+</details>
+
+<div dir="rtl">
+
+مرخّصة بموجب MIT
 
 </div>

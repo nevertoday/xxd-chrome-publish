@@ -2,14 +2,70 @@
 
 [English](README.md) · **简体中文** · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
-给**已经上架 Chrome 应用商店**的插件发更新：在终端里敲一条命令，或者直接跟 Claude Code / Codex 说一声，
-它就会构建、跑检查、打包、和商店上的版本对比，然后上传、提交审核。
+**一条命令，发布 Chrome 插件的更新。**
+自动构建、打包、上传、提交审核。上传之前就告诉你，商店会不会拒。
 
-和普通上传脚本最大的不同是**预检**：上传之前先告诉你，商店会因为什么拒掉这次提交。
+可以当命令用，也可以装进 Claude Code / Codex，直接说“把这个插件发了”。
+
+> 只适用于已经上架的插件。第一次上架还是要去 Chrome 后台。
+
+## 它帮你解决什么
+
+| 以前 | 现在 |
+|---|---|
+| 上传成功了，提交却被拒：*“does not meet the requirements”* | 提前告诉你哪个权限要去后台写说明，还指出代码里哪一行用到了它 |
+| 代码后来才加载的文件没打进包，发出去功能坏了 | 自动找出来，一起打包 |
+| 不小心传了旧的构建 | 先跑你的构建和测试脚本，失败就不传 |
+| 版本号和商店撞了被拒 | 同时参考代码和商店，算出下一个版本号 |
+| 记不清哪些插件有改动还没发 | 一张表全部列出来 |
+
+## 快速开始
+
+**1. 安装**
+
+```bash
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # 当 Claude 技能用（Codex 是 ~/.codex/skills）
+sh ~/code/xxd-chrome-publish/scripts/install.sh                       # 当命令用
+```
+
+**2. 连上你的商店账号**（只需一次，[详细步骤](references/setup.md)）
+
+```bash
+xxd-chrome-publish setup --publisher-id <后台网址里的 ID> --service-account <服务账号邮箱>
+```
+
+**3. 给每个插件目录绑定 ID**（只需一次）
+
+```bash
+cd 插件目录
+xxd-chrome-publish bind --extension-id <扩展 ID 或商店链接>
+```
+
+**4. 发布**
+
+```bash
+xxd-chrome-publish
+```
+
+## 常用命令
+
+| 你想 | 敲 |
+|---|---|
+| 先看看会发生什么，什么都不改 | `xxd-chrome-publish preflight` |
+| 发布更新 | `xxd-chrome-publish` |
+| 后台补完资料，重新提交 | `xxd-chrome-publish submit` |
+| 查审核进度 | `xxd-chrome-publish status` |
+| 看哪些插件有改动还没发 | `xxd-chrome-publish scan ~/code` |
+| 检查配置对不对 | `xxd-chrome-publish doctor` |
+
+在 Claude Code / Codex 里直接说就行：*“把 flomo 那个插件发了”*、*“看看哪些插件可以发”*。
+
+## 检查结果长这样
 
 ```
 $ xxd-chrome-publish preflight
-图片裁剪工具 · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
+Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
   store     PUBLISHED 1.0.26
   version   1.0.26 → 1.0.27
   package   27 files · 249 KB
@@ -17,73 +73,60 @@ $ xxd-chrome-publish preflight
   dashboard 1 to-do:
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
-  => NEEDS DASHBOARD — 先在后台填好 [required] 项并保存，再加 --dashboard-ready 发布
+  => NEEDS DASHBOARD
 ```
 
-## 为什么要做这个
+这次检查发现新加了一个网站权限。打开链接，写一句插件为什么需要它，保存，再发布就行。
 
-Chrome 商店的 API 只能“传包”和“提交”。权限用途说明、数据使用声明、隐私政策链接、商店描述，**只能在后台网页里改**。
-所有命令行工具（包括 chrome-webstore-upload-cli）都过不了这一关，典型症状是：上传成功了，
-提交时却报 `does not meet the requirements`。
+## 它做不到的
 
-这个工具会下载商店上正在用的版本，和你本地的 manifest 对比，列出哪些新权限、新站点需要写说明，
-还会指出代码里哪几行用到了它们，写说明一分钟就够。它还修掉了实际踩过的几个打包坑：
+下面这些 Google 没有开放接口，只能在 Chrome 后台操作：
 
-- **按需注入的文件**：`executeScript({ files: [...] })`、`{ panel: ["build/panel.js"] }` 这种写法也会被打进包里。只顺着引用找文件的打包器会悄悄漏掉它们。
-- **构建产物过期**：先跑项目自己的 `build` 和 `check`，失败就不上传。
-- **文件缺失**：manifest 里写了但文件不存在，上传前就拦下来。
-- **版本号撞车**：新版本号同时参考本地和商店（包括已发布的和审核中的），商店版本比本地新也不会被拒。
-- **正在审核**：提前发现，不会传到一半才失败。
+- 第一次上架
+- 商店描述和截图
+- 隐私页：权限说明、数据用途、隐私政策链接
 
-## 安装
+工具会告诉你具体要填什么、去哪里填。浏览器 AI 助手也替你填不了，因为 Chrome 不允许任何插件操作商店页面。
 
-作为 AI 助手的技能（Claude Code、Codex 等）：
+## 细节（点开看）
 
-```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
-ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex 用 ~/.codex/skills
-```
+<details>
+<summary><b>登录方式：两种选一种</b></summary>
 
-把仓库放在技能目录外面再软链进去，`git pull` 就能原地更新技能，改起来也和普通项目一样。
-之后直接说“把这个插件发了”“看看哪些插件可以发”就行。
+| 方式 | 适合 | 需要什么 |
+|---|---|---|
+| gcloud + 服务账号 | 自己电脑上用，不存密钥文件 | 装 Google Cloud SDK，建一个服务账号 |
+| OAuth refresh token | CI（比如 GitHub Actions） | `CWS_CLIENT_ID`、`CWS_CLIENT_SECRET`、`CWS_REFRESH_TOKEN` 三个环境变量 |
 
-作为命令行工具（需要 Node 18+，没有其他依赖）：
+⚠️ 服务账号要填在后台 Account 页的 **service account** 那一栏，**不是**旁边的 “Trusted tester accounts”。那一栏没有接口权限，填错了会一直报 403。
 
-```bash
-sh ~/code/xxd-chrome-publish/scripts/install.sh   # 链接成 ~/.local/bin/xxd-chrome-publish
-```
+完整步骤：[references/setup.md](references/setup.md)
 
-以后更新只要 `git -C ~/code/xxd-chrome-publish pull`，技能软链和命令都指向这份仓库。
+</details>
 
-## 一次性配置
+<details>
+<summary><b>全部参数</b></summary>
 
-```bash
-xxd-chrome-publish setup --publisher-id <后台网址里的 ID>
-xxd-chrome-publish setup --service-account chrome-webstore-publisher@<项目>.iam.gserviceaccount.com
-#   或者设置 CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN 环境变量（OAuth，适合 CI）
-cd 插件目录 && xxd-chrome-publish bind --extension-id <扩展 ID 或商店链接>
-xxd-chrome-publish doctor
-```
+| 参数 | 作用 |
+|---|---|
+| `--minor` / `--major` | 1.2.3 → 1.3.0 / 2.0.0（默认是 1.2.4） |
+| `--set-version 1.5.0` | 就用这个版本号 |
+| `--no-bump` | 不改版本号，用 manifest.json 里现有的 |
+| `--skip-build` / `--skip-checks` | 不跑构建 / 测试脚本 |
+| `--dashboard-ready` | 后台已经填好了，继续发 |
+| `--cancel-pending` | 撤回审核中的版本，改发这一版 |
+| `--upload-only` | 只上传，不提交审核 |
+| `--staged` | 审核通过后先不上线，等你手动发布 |
+| `--zip 文件.zip` | 直接传这个 ZIP，不重新打包 |
+| `--commit` | 发完把新版本号提交到 git |
+| `--json` | 输出 JSON，方便程序读取 |
 
-两种登录方式的详细步骤见 [references/setup.md](references/setup.md)。特别提醒：服务账号要填在后台
-Account 页的 **service account** 那一栏，不是旁边的 “Trusted tester accounts”（受信任测试员）。
-那一栏没有 API 权限，填错了会一直 403。
+退出码：`0` 完成 · `1` 出错 · `2` 有别的版本在审核 · `3` 要先去后台补资料
 
-## 日常用法
+</details>
 
-```bash
-xxd-chrome-publish preflight        # 只看会发生什么，什么都不改
-xxd-chrome-publish                  # 发布：构建 → 检查 → 打包 → 对比 → 上传 → 提交
-xxd-chrome-publish submit           # 后台补完资料后，提交已上传的草稿（不重新上传）
-xxd-chrome-publish scan ~/code      # 一览所有插件：本地 / 商店版本、审核状态、没发布的提交数
-xxd-chrome-publish status | pack | cancel | rollout 50
-```
-
-常用参数：`--minor`、`--major`、`--set-version X`、`--no-bump`、`--skip-build`、`--skip-checks`、
-`--dashboard-ready`、`--cancel-pending`、`--upload-only`、`--staged`、`--zip 路径`、`--commit`、`--json`。
-退出码：`0` 成功 · `1` 出错 · `2` 有版本正在审核 · `3` 需要先去后台补资料。
-
-每个插件自己的配置写在 `.chrome-publish.json` 里：
+<details>
+<summary><b>每个插件的设置</b>（<code>.chrome-publish.json</code>）</summary>
 
 ```json
 {
@@ -96,19 +139,27 @@ xxd-chrome-publish status | pack | cancel | rollout 50
 }
 ```
 
-`build` / `check` 写命令或 `false`（默认用 package.json 里的同名脚本），`packageDir` 是构建输出目录，
-`include` / `exclude` 用来强制加入或排除文件。
+| 字段 | 意思 |
+|---|---|
+| `extensionId` | 商店链接里那串 32 位字母 |
+| `build` | 构建命令，或 `false`。默认用 package.json 里的 `build` 脚本 |
+| `check` | 测试命令，或 `false`。默认用 package.json 里的 `check` 脚本 |
+| `packageDir` | 要打包的目录，比如构建输出到 `dist` 时填它 |
+| `include` / `exclude` | 一定要打包 / 一定不打包的文件 |
 
-## 它做不到的
+</details>
 
-首次上架、修改商店描述和截图、填隐私页。Google 没有提供这些 API，Chrome 也不允许任何浏览器插件
-（包括 AI 浏览器助手）操作商店页面。工具会告诉你具体要填什么，怎么写权限说明可以参考
-[references/dashboard.md](references/dashboard.md)。
-
-## 开发
+<details>
+<summary><b>更新和开发</b></summary>
 
 ```bash
-npm test   # 单元测试 + 对本地假商店的端到端测试
+git -C ~/code/xxd-chrome-publish pull   # 更新（技能软链和命令都指向这里）
+npm test                                 # 跑测试（用本地假商店，不会真的发布）
 ```
 
-MIT 许可。
+权限说明怎么写才容易过审：[references/dashboard.md](references/dashboard.md) ·
+报错和解决办法：[references/troubleshooting.md](references/troubleshooting.md)
+
+</details>
+
+MIT 许可

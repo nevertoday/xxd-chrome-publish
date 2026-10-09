@@ -2,12 +2,66 @@
 
 **English** · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
-Publish updates to Chrome extensions that are **already on the Chrome Web Store** — from the
-terminal, or by asking Claude Code / Codex. One command builds, checks, packages, compares with
-the live version, uploads and submits for review.
+**Ship updates to your Chrome extensions with one command.**
+It builds, zips, uploads and submits for review — and tells you *before uploading* if the Chrome Web Store is going to reject it.
 
-What makes it different from a plain upload script is the **preflight**: before anything is
-uploaded, it tells you what the Web Store is going to reject.
+Use it as a command, or as a skill in Claude Code / Codex: just say "publish my extension".
+
+> For extensions that are already listed. The very first listing still happens in the Chrome dashboard.
+
+## What it fixes
+
+| Before | With xxd-chrome-publish |
+|---|---|
+| Upload works, then submit fails: *"does not meet the requirements"* | You're told first which permission needs a note in the dashboard — and which line of your code uses it |
+| Files your code loads later are missing from the zip, so a feature breaks | They're found and packed |
+| An old build gets uploaded by mistake | Your build and test scripts run first; if they fail, nothing is uploaded |
+| The version number clashes with the store | The next version is worked out from both your code and the store |
+| You forget which extensions have unreleased changes | One table lists them all |
+
+## Quick start
+
+**1. Install**
+
+```bash
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # as a Claude skill (Codex: ~/.codex/skills)
+sh ~/code/xxd-chrome-publish/scripts/install.sh                       # as a command
+```
+
+**2. Connect your store account** (once — [step-by-step](references/setup.md))
+
+```bash
+xxd-chrome-publish setup --publisher-id <ID in your dashboard URL> --service-account <email>
+```
+
+**3. Link each extension folder** (once)
+
+```bash
+cd my-extension
+xxd-chrome-publish bind --extension-id <extension ID or store link>
+```
+
+**4. Publish**
+
+```bash
+xxd-chrome-publish
+```
+
+## Everyday commands
+
+| You want to | Run |
+|---|---|
+| See what would happen, without changing anything | `xxd-chrome-publish preflight` |
+| Publish an update | `xxd-chrome-publish` |
+| Submit again after fixing the dashboard | `xxd-chrome-publish submit` |
+| Check the review status | `xxd-chrome-publish status` |
+| See which extensions have unreleased changes | `xxd-chrome-publish scan ~/code` |
+| Check that your setup works | `xxd-chrome-publish doctor` |
+
+In Claude Code / Codex, just ask: *"publish the flomo extension"*, *"which of my extensions can I release?"*
+
+## What a check looks like
 
 ```
 $ xxd-chrome-publish preflight
@@ -18,80 +72,61 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
   manifest  vs store: +hosts https://api.example.com/*
   dashboard 1 to-do:
     [required] Justify the new host permissions
-               hosts: https://api.example.com/*
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
-  => NEEDS DASHBOARD — fill the [required] items, Save draft, then publish with --dashboard-ready
+  => NEEDS DASHBOARD
 ```
 
-## Why
+This one found a new website permission. Open the link, write one sentence about why the extension needs it, save, then publish.
 
-The Chrome Web Store API can only upload a package and submit it. Permission justifications,
-data-usage disclosures, the privacy policy URL and listing text exist **only in the dashboard**.
-Every CLI (this one, chrome-webstore-upload-cli, …) hits the same wall, and the usual symptom is
-an upload that succeeds followed by `publish failed: does not meet the requirements`.
+## What it can't do
 
-This tool downloads the published package, diffs its manifest against yours, and lists the new
-permissions and hosts that need a justification — with the lines of your code that use them, so
-writing the justification takes a minute. It also fixes the packaging mistakes that bite in
-practice:
+Google has no API for these, so they stay in the Chrome dashboard:
 
-- **Lazy-injected files** — `chrome.scripting.executeScript({ files: [...] })` and maps like
-  `{ panel: ["build/panel.js"] }` are picked up; reference-walking zippers silently drop them.
-- **Stale builds** — the project's `build` and `check` scripts run first; failures stop the upload.
-- **Missing files** — a manifest pointing at a file that doesn't exist is refused before upload.
-- **Version clashes** — the next version is computed from both the local manifest and the store
-  (published and in review), so a store that is ahead of your checkout doesn't cause a rejection.
-- **Reviews in progress** — detected up front instead of failing mid-way.
+- the first listing
+- store description and screenshots
+- the privacy tab: permission notes, data use, privacy policy link
 
-## Install
+The tool tells you exactly what to fill in, and where. A browser agent can't do it for you either — Chrome blocks extensions from controlling store pages.
 
-As an agent skill (Claude Code, Codex, …):
+## Details
 
-```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
-ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex: ~/.codex/skills
-```
+<details>
+<summary><b>Signing in: two ways</b></summary>
 
-Keeping the clone outside the skills folder and linking it in means `git pull` updates the skill
-in place, and you can edit it like any other project. Then just say "publish my extension" /
-"which of my extensions have unreleased changes?".
+| Way | Good for | What you need |
+|---|---|---|
+| gcloud + service account | your own computer, no secret files | Google Cloud SDK, a service account |
+| OAuth refresh token | CI (e.g. GitHub Actions) | `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN` |
 
-As a plain CLI (Node 18+, no dependencies):
+⚠️ The service account goes in the **service account** field on the dashboard's Account page — **not** in "Trusted tester accounts". That box gives no API access, and you'll get 403 errors.
 
-```bash
-sh ~/code/xxd-chrome-publish/scripts/install.sh   # links ~/.local/bin/xxd-chrome-publish
-```
+Full steps: [references/setup.md](references/setup.md)
 
-Update later with `git -C ~/code/xxd-chrome-publish pull` — the skill link and the CLI both
-point at the clone.
+</details>
 
-## Set up once
+<details>
+<summary><b>All options</b></summary>
 
-```bash
-xxd-chrome-publish setup --publisher-id <ID from the dashboard URL>
-xxd-chrome-publish setup --service-account chrome-webstore-publisher@<project>.iam.gserviceaccount.com
-#   …or export CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN (OAuth, good for CI)
-cd my-extension && xxd-chrome-publish bind --extension-id <ID or store URL>
-xxd-chrome-publish doctor
-```
+| Option | What it does |
+|---|---|
+| `--minor` / `--major` | 1.2.3 → 1.3.0 / 2.0.0 (default is 1.2.4) |
+| `--set-version 1.5.0` | use exactly this version |
+| `--no-bump` | keep the version that's in manifest.json |
+| `--skip-build` / `--skip-checks` | don't run your build / test script |
+| `--dashboard-ready` | you've filled in the dashboard — go ahead |
+| `--cancel-pending` | withdraw the version in review and send this one |
+| `--upload-only` | upload, but don't submit |
+| `--staged` | after approval, wait for you to release it |
+| `--zip file.zip` | upload this zip instead of making one |
+| `--commit` | git-commit the new version number afterwards |
+| `--json` | machine-readable output |
 
-Step-by-step for both credential types: [references/setup.md](references/setup.md).
+Exit codes: `0` done · `1` error · `2` another version is in review · `3` fill in the dashboard first
 
-## Use
+</details>
 
-```bash
-xxd-chrome-publish preflight        # what would happen; touches nothing
-xxd-chrome-publish                  # publish: build → check → package → diff → upload → submit
-xxd-chrome-publish submit           # after fixing the dashboard: submit the uploaded draft
-xxd-chrome-publish scan ~/code      # every bound extension: local vs store, review state, unreleased commits
-xxd-chrome-publish status | pack | cancel | rollout 50
-```
-
-Flags: `--minor`, `--major`, `--set-version X`, `--no-bump`, `--skip-build`, `--skip-checks`,
-`--dashboard-ready`, `--cancel-pending`, `--upload-only`, `--staged`, `--zip PATH`, `--commit`,
-`--json`. Exit codes: `0` ok · `1` error · `2` a review is in progress · `3` dashboard work needed.
-
-Per-extension options go in `.chrome-publish.json`:
+<details>
+<summary><b>Per-extension settings</b> (<code>.chrome-publish.json</code>)</summary>
 
 ```json
 {
@@ -104,17 +139,27 @@ Per-extension options go in `.chrome-publish.json`:
 }
 ```
 
-## What it won't do
+| Field | Meaning |
+|---|---|
+| `extensionId` | the 32-letter ID from the store link |
+| `build` | build command, or `false`. Default: the `build` script in package.json |
+| `check` | test command, or `false`. Default: the `check` script in package.json |
+| `packageDir` | folder to zip, if your build writes to e.g. `dist` |
+| `include` / `exclude` | always pack / never pack these files |
 
-Create a first listing, edit listing text or screenshots, or fill in the privacy tab — Google
-offers no API for these, and Chrome blocks browser extensions (including AI browser agents) from
-scripting Web Store pages. The tool tells you exactly what to fill in instead; see
-[references/dashboard.md](references/dashboard.md) for justification examples.
+</details>
 
-## Develop
+<details>
+<summary><b>Update and develop</b></summary>
 
 ```bash
-npm test   # unit tests + end-to-end runs against a local fake Web Store
+git -C ~/code/xxd-chrome-publish pull   # update (the skill link and the command both point here)
+npm test                                 # run the tests (uses a fake local store)
 ```
 
-MIT licensed.
+Writing permission notes reviewers accept: [references/dashboard.md](references/dashboard.md) ·
+Error messages and fixes: [references/troubleshooting.md](references/troubleshooting.md)
+
+</details>
+
+MIT License
