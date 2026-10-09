@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[中文说明](README.zh-CN.md)
+**English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [العربية](README.ar.md)
 
 Publish updates to Chrome extensions that are **already on the Chrome Web Store** — from the
 terminal, or by asking Claude Code / Codex. One command builds, checks, packages, compares with
@@ -48,16 +48,22 @@ practice:
 As an agent skill (Claude Code, Codex, …):
 
 ```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex: ~/.codex/skills
 ```
 
-Then just say "publish my extension" / "which of my extensions have unreleased changes?".
+Keeping the clone outside the skills folder and linking it in means `git pull` updates the skill
+in place, and you can edit it like any other project. Then just say "publish my extension" /
+"which of my extensions have unreleased changes?".
 
 As a plain CLI (Node 18+, no dependencies):
 
 ```bash
-sh ~/.claude/skills/xxd-chrome-publish/scripts/install.sh   # links ~/.local/bin/xxd-chrome-publish
+sh ~/code/xxd-chrome-publish/scripts/install.sh   # links ~/.local/bin/xxd-chrome-publish
 ```
+
+Update later with `git -C ~/code/xxd-chrome-publish pull` — the skill link and the CLI both
+point at the clone.
 
 ## Set up once
 

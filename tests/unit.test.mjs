@@ -213,7 +213,7 @@ test("ID normalisation accepts store and dashboard URLs", () => {
     normalizeExtensionId("https://chromewebstore.google.com/detail/xposter/iimkimodgdjnnmdopeolboakhjmhfbbj?hl=zh"),
     "iimkimodgdjnnmdopeolboakhjmhfbbj",
   );
-  assert.equal(normalizePublisherId("https://chrome.google.com/webstore/devconsole/4276c01f-aaaa/settings"), "4276c01f-aaaa");
+  assert.equal(normalizePublisherId("https://chrome.google.com/webstore/devconsole/1a2b3c4d-0000/settings"), "1a2b3c4d-0000");
 });
 
 test("build/check detection honours overrides and package managers", () => {

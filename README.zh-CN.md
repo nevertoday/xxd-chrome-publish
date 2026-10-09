@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[English](README.md)
+[English](README.md) · **简体中文** · [日本語](README.ja.md) · [한국어](README.ko.md) · [العربية](README.ar.md)
 
 给**已经上架 Chrome 应用商店**的插件发更新：在终端里敲一条命令，或者直接跟 Claude Code / Codex 说一声，
 它就会构建、跑检查、打包、和商店上的版本对比，然后上传、提交审核。
@@ -40,16 +40,20 @@ Chrome 商店的 API 只能“传包”和“提交”。权限用途说明、�
 作为 AI 助手的技能（Claude Code、Codex 等）：
 
 ```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Codex 用 ~/.codex/skills
 ```
 
+把仓库放在技能目录外面再软链进去，`git pull` 就能原地更新技能，改起来也和普通项目一样。
 之后直接说“把这个插件发了”“看看哪些插件可以发”就行。
 
 作为命令行工具（需要 Node 18+，没有其他依赖）：
 
 ```bash
-sh ~/.claude/skills/xxd-chrome-publish/scripts/install.sh   # 链接成 ~/.local/bin/xxd-chrome-publish
+sh ~/code/xxd-chrome-publish/scripts/install.sh   # 链接成 ~/.local/bin/xxd-chrome-publish
 ```
+
+以后更新只要 `git -C ~/code/xxd-chrome-publish pull`，技能软链和命令都指向这份仓库。
 
 ## 一次性配置
 
@@ -79,7 +83,21 @@ xxd-chrome-publish status | pack | cancel | rollout 50
 `--dashboard-ready`、`--cancel-pending`、`--upload-only`、`--staged`、`--zip 路径`、`--commit`、`--json`。
 退出码：`0` 成功 · `1` 出错 · `2` 有版本正在审核 · `3` 需要先去后台补资料。
 
-每个插件自己的配置写在 `.chrome-publish.json` 里，字段和 [README.md](README.md#use) 一样。
+每个插件自己的配置写在 `.chrome-publish.json` 里：
+
+```json
+{
+  "extensionId": "abcdefghijklmnopabcdefghijklmnop",
+  "build": "npm run build",
+  "check": false,
+  "packageDir": "dist",
+  "include": ["assets/models/**"],
+  "exclude": ["fixtures/**"]
+}
+```
+
+`build` / `check` 写命令或 `false`（默认用 package.json 里的同名脚本），`packageDir` 是构建输出目录，
+`include` / `exclude` 用来强制加入或排除文件。
 
 ## 它做不到的
 
