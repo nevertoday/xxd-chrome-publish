@@ -2,7 +2,7 @@
 
 <div dir="rtl">
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · **العربية**
+[简体中文](README.md) · [繁體中文](README.zh-TW.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · **العربية**
 
 **انشر تحديثات إضافات Chrome بأمر واحد.**
 تبني الإضافة وتضغطها وترفعها وترسلها للمراجعة، وتخبرك *قبل الرفع* إن كان سوق Chrome الإلكتروني سيرفضها.

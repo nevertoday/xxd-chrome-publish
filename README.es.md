@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · **Español** · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
+[简体中文](README.md) · [繁體中文](README.zh-TW.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · **Español** · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
 **Publica las actualizaciones de tus extensiones de Chrome con un solo comando.**
 Compila, empaqueta, sube y envía a revisión, y te avisa *antes de subir nada* si la Chrome Web Store la va a rechazar.

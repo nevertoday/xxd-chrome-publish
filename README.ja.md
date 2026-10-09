@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · **日本語** · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
+[简体中文](README.md) · [繁體中文](README.zh-TW.md) · [English](README.en.md) · **日本語** · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
 **Chrome 拡張機能のアップデートを、コマンド 1 つで公開。**
 ビルド、zip 化、アップロード、審査への提出まで自動。アップロードの前に、ストアに却下されるかどうかを教えてくれます。

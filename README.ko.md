@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · **한국어** · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
+[简体中文](README.md) · [繁體中文](README.zh-TW.md) · [English](README.en.md) · [日本語](README.ja.md) · **한국어** · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
 **명령 하나로 Chrome 확장 프로그램 업데이트를 배포하세요.**
 빌드, 압축, 업로드, 심사 제출까지 자동입니다. 업로드하기 전에 스토어가 거부할지 먼저 알려 줍니다.
