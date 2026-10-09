@@ -1,0 +1,4 @@
+interface:
+  display_name: "xxd-chrome-publish"
+  short_description: "Publish updates to listed Chrome extensions, with a preflight for dashboard-only requirements"
+  default_prompt: "Use $xxd-chrome-publish: preflight this extension, tell me about any dashboard to-dos, then publish it to the Chrome Web Store."
