@@ -9,7 +9,11 @@
 
 > 이미 등록된 확장 프로그램용입니다. 처음 등록은 Chrome 대시보드에서 하세요.
 
+![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
+
 ## 무엇이 해결되나
+
+![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
 
 | 예전 | 이제 |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 이번 검사에서는 새 사이트 접근 권한이 발견됐습니다. 링크를 열고 왜 필요한지 한 문장 쓰고 저장한 다음 배포하면 됩니다.
 
 ## 할 수 없는 것
+
+![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
 
 아래 항목은 Google이 API를 제공하지 않아서 Chrome 대시보드에서 해야 합니다.
 
@@ -155,6 +161,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # 업데이트 (스킬 링크와 명령 모두 여기를 가리킴)
 npm test                                 # 테스트 실행 (로컬 가짜 스토어를 써서 실제로 배포되지 않음)
+npm run diagrams                         # 다이어그램 다시 만들기 (build.mjs 문구 수정 후)
 ```
 
 심사를 잘 통과하는 권한 설명 쓰는 법: [references/dashboard.md](references/dashboard.md) ·

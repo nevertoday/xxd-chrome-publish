@@ -11,7 +11,11 @@
 
 > للإضافات المنشورة مسبقًا فقط. النشر لأول مرة ما زال يتم من لوحة تحكم Chrome.
 
+![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
+
 ## ماذا تحل؟
+
+![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
 
 | قبل | مع xxd-chrome-publish |
 |---|---|
@@ -102,6 +106,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 ## ما لا تستطيع فعله
 
+![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
+
 لا توفّر Google واجهة برمجية لهذه الأمور، فتبقى في لوحة تحكم Chrome:
 
 - النشر لأول مرة
@@ -188,6 +194,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # update (the skill link and the command both point here)
 npm test                                 # run the tests (uses a fake local store)
+npm run diagrams                         # regenerate the diagrams (after editing build.mjs)
 ```
 
 <div dir="rtl">

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 336" width="1200" height="336" role="img" aria-label="以前：上传后提交被拒，再去后台补资料。现在：预检先发现新权限，去后台写好说明后再上传，一次通过。" font-family='-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC", Helvetica, Arial, sans-serif'>
+<title>以前：上传后提交被拒，再去后台补资料。现在：预检先发现新权限，去后台写好说明后再上传，一次通过。</title>
+<style>
+.bg{fill:#ffffff;stroke:#d1d9e0}
+.ink{fill:#1f2328}.muted{fill:#59636e}
+.node{fill:#f6f8fa;stroke:#d1d9e0}
+.line{stroke:#818b98;fill:none}.line-fill{fill:#818b98}
+.blue-box{fill:#ddf4ff;stroke:#54aeff}.blue{fill:#0969da}.blue-line{stroke:#0969da;fill:none}.blue-fill{fill:#0969da}
+.red-box{fill:#ffebe9;stroke:#ff8182}.red{fill:#cf222e}.red-line{stroke:#cf222e;fill:none}.red-fill{fill:#cf222e}
+.amber-box{fill:#fff8c5;stroke:#d4a72c}.amber{fill:#9a6700}.amber-line{stroke:#bf8700;fill:none}.amber-fill{fill:#bf8700}
+.green-box{fill:#dafbe1;stroke:#4ac26b}.green{fill:#1a7f37}
+.lane{fill:#f6f8fa}
+.boundary{stroke:#0969da;fill:none}
+.num{fill:#1f2328}.num-text{fill:#ffffff}
+@media (prefers-color-scheme: dark){
+.bg{fill:#0d1117;stroke:#3d444d}
+.ink{fill:#e6edf3}.muted{fill:#9198a1}
+.node{fill:#151b23;stroke:#3d444d}
+.line{stroke:#656c76}.line-fill{fill:#656c76}
+.blue-box{fill:#0c2d6b;stroke:#1f6feb}.blue{fill:#4493f8}.blue-line{stroke:#4493f8}.blue-fill{fill:#4493f8}
+.red-box{fill:#3c1618;stroke:#da3633}.red{fill:#ff7b72}.red-line{stroke:#f85149}.red-fill{fill:#f85149}
+.amber-box{fill:#3a2a07;stroke:#9e6a03}.amber{fill:#e3b341}.amber-line{stroke:#d29922}.amber-fill{fill:#d29922}
+.green-box{fill:#0f2d1a;stroke:#238636}.green{fill:#3fb950}
+.lane{fill:#151b23}
+.boundary{stroke:#4493f8}
+.num{fill:#e6edf3}.num-text{fill:#0d1117}
+}</style>
+<defs><marker id="a-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="line-fill"/></marker><marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="blue-fill"/></marker><marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="red-fill"/></marker><marker id="a-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="amber-fill"/></marker></defs>
+<rect x="1" y="1" width="1198" height="334" rx="16" class="bg" stroke-width="1.2"/>
+<text x="40" y="44" font-size="20" font-weight="700" text-anchor="start" class="ink">补资料这一步，从上传之后挪到了上传之前</text><text x="1136" y="44" font-size="12" font-weight="400" text-anchor="start" class="muted">上传</text><rect x="1114" y="33" width="14" height="14" rx="3" class="blue-box" stroke-width="1.2"/><text x="1008" y="44" font-size="12" font-weight="400" text-anchor="start" class="muted">去后台（手动）</text><rect x="986" y="33" width="14" height="14" rx="3" class="amber-box" stroke-width="1.2"/><rect x="24" y="74" width="1152" height="106" rx="12" class="lane" stroke-width="1.2"/><text x="56" y="126" font-size="16" font-weight="700" text-anchor="middle" class="ink">以前</text><rect x="150" y="96" width="60" height="48" rx="10" class="node" stroke-width="1.2"/><text x="180" y="125" font-size="14" font-weight="600" text-anchor="middle" class="ink">打包</text><path d="M214,120 H250" class="line" stroke-width="1.6" marker-end="url(#a-line)"/><rect x="256" y="96" width="79" height="48" rx="10" class="blue-box" stroke-width="1.2"/><text x="295.5" y="125" font-size="14" font-weight="600" text-anchor="middle" class="blue">上传 ✓</text><path d="M339,120 H375" class="line" stroke-width="1.6" marker-end="url(#a-line)"/><rect x="381" y="96" width="79" height="48" rx="10" class="red-box" stroke-width="1.2"/><text x="420.5" y="125" font-size="14" font-weight="600" text-anchor="middle" class="red">提交 ✗</text><text x="420.5" y="164" font-size="11.5" font-weight="400" text-anchor="middle" class="red">does not meet the requirements</text><path d="M464,120 H500" class="line" stroke-width="1.6" marker-end="url(#a-line)"/><rect x="506" y="96" width="172" height="48" rx="10" class="amber-box" stroke-width="1.2"/><text x="592" y="125" font-size="14" font-weight="600" text-anchor="middle" class="amber">去后台查原因、补资料</text><path d="M682,120 H718" class="line" stroke-width="1.6" marker-end="url(#a-line)"/><rect x="724" y="96" width="74" height="48" rx="10" class="node" stroke-width="1.2"/><text x="761" y="125" font-size="14" font-weight="600" text-anchor="middle" class="ink">再提交</text><text x="816" y="125" font-size="13" font-weight="600" text-anchor="start" class="red">多绕一圈</text><rect x="24" y="200" width="1152" height="106" rx="12" class="lane" stroke-width="1.2"/><text x="56" y="252" font-size="16" font-weight="700" text-anchor="middle" class="ink">现在</text><rect x="150" y="222" width="144" height="48" rx="10" class="node" stroke-width="1.2"/><text x="222" y="251" font-size="14" font-weight="600" text-anchor="middle" class="ink">预检：发现新权限</text><text x="222" y="290" font-size="11.5" font-weight="400" text-anchor="middle" class="muted">还没上传任何东西</text><path d="M298,246 H334" class="line" stroke-width="1.6" marker-end="url(#a-line)"/><rect x="340" y="222" width="116" height="48" rx="10" class="amber-box" stroke-width="1.2"/><text x="398" y="251" font-size="14" font-weight="600" text-anchor="middle" class="amber">去后台写说明</text><path d="M460,246 H496" class="line" stroke-width="1.6" marker-end="url(#a-line)"/><rect x="502" y="222" width="60" height="48" rx="10" class="blue-box" stroke-width="1.2"/><text x="532" y="251" font-size="14" font-weight="600" text-anchor="middle" class="blue">上传</text><path d="M566,246 H602" class="line" stroke-width="1.6" marker-end="url(#a-line)"/><rect x="608" y="222" width="79" height="48" rx="10" class="green-box" stroke-width="1.2"/><text x="647.5" y="251" font-size="14" font-weight="600" text-anchor="middle" class="green">提交 ✓</text><text x="705" y="251" font-size="13" font-weight="600" text-anchor="start" class="green">一次通过</text>
+</svg>

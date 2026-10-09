@@ -9,7 +9,11 @@
 
 > 只適用於已經上架的擴充功能。第一次上架還是要到 Chrome 資訊主頁。
 
+![發布流程：上傳前的每一步出問題都會停下](assets/diagrams/flow.zh-Hant.svg)
+
 ## 它幫你解決什麼
+
+![補資料這一步挪到了上傳之前](assets/diagrams/before-after.zh-Hant.svg)
 
 | 以前 | 現在 |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 這次檢查發現新增了一個網站權限。打開連結，寫一句擴充功能為什麼需要它，儲存，再發布就好。
 
 ## 它做不到的
+
+![工具自動做的，和只能你在資訊主頁做的](assets/diagrams/roles.zh-Hant.svg)
 
 下面這些 Google 沒有開放 API，只能在 Chrome 資訊主頁操作：
 
@@ -155,6 +161,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # 更新（技能連結和指令都指向這裡）
 npm test                                 # 執行測試（用本機假商店，不會真的發布）
+npm run diagrams                         # 重新產生示意圖（改了 build.mjs 裡的文字後）
 ```
 
 權限說明怎麼寫比較容易過審：[references/dashboard.md](references/dashboard.md) ·

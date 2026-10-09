@@ -9,7 +9,11 @@ Utilisez-la comme commande, ou comme skill dans Claude Code / Codex : dites simp
 
 > Pour les extensions déjà en ligne. La toute première publication se fait toujours dans le tableau de bord Chrome.
 
+![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
+
 ## Ce qu'elle règle
+
+![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
 
 | Avant | Avec xxd-chrome-publish |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 Ici, elle a trouvé une nouvelle autorisation pour un site. Ouvrez le lien, écrivez une phrase sur la raison de ce besoin, enregistrez, puis publiez.
 
 ## Ce qu'elle ne fait pas
+
+![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
 
 Google ne propose pas d'API pour ceci, donc ça reste dans le tableau de bord Chrome :
 
@@ -155,6 +161,7 @@ Codes de sortie : `0` terminé · `1` erreur · `2` une autre version est en exa
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # mettre à jour (le lien de la skill et la commande pointent ici)
 npm test                                 # lancer les tests (avec un faux store local)
+npm run diagrams                         # régénérer les schémas (après avoir modifié build.mjs)
 ```
 
 Rédiger des notes d'autorisations acceptées : [references/dashboard.md](references/dashboard.md) ·

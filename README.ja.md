@@ -9,7 +9,11 @@
 
 > すでに公開済みの拡張機能向けです。最初の公開は Chrome のダッシュボードで行ってください。
 
+![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
+
 ## 何が解決するか
+
+![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
 
 | これまで | これから |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 この例では、新しいサイトへのアクセス権限が見つかりました。リンクを開き、なぜ必要かを 1 文書いて保存し、公開すれば完了です。
 
 ## できないこと
+
+![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
 
 次のものは Google に API がないため、Chrome のダッシュボードで操作します。
 
@@ -155,6 +161,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # 更新（スキルのリンクもコマンドもここを指している）
 npm test                                 # テスト実行（ローカルの偽ストアを使うので実際には公開されない）
+npm run diagrams                         # 図を作り直す（build.mjs の文言を変えたあと）
 ```
 
 審査に通りやすい権限の説明の書き方：[references/dashboard.md](references/dashboard.md) ·

@@ -9,7 +9,11 @@ Compila, empaqueta, sube y envía a revisión, y te avisa *antes de subir nada* 
 
 > Para extensiones que ya están publicadas. La primera publicación se sigue haciendo en el panel de Chrome.
 
+![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
+
 ## Qué resuelve
+
+![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
 
 | Antes | Con xxd-chrome-publish |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 Aquí encontró un permiso nuevo para un sitio web. Abre el enlace, escribe una frase sobre por qué lo necesita la extensión, guarda y publica.
 
 ## Lo que no puede hacer
+
+![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
 
 Google no ofrece API para esto, así que se queda en el panel de Chrome:
 
@@ -155,6 +161,7 @@ Códigos de salida: `0` hecho · `1` error · `2` hay otra versión en revisión
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # actualizar (el enlace de la skill y el comando apuntan aquí)
 npm test                                 # ejecutar los tests (usa una tienda falsa local)
+npm run diagrams                         # regenerar los diagramas (tras editar build.mjs)
 ```
 
 Cómo escribir notas de permisos que se aprueban: [references/dashboard.md](references/dashboard.md) ·

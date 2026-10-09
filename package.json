@@ -7,7 +7,8 @@
     "xxd-chrome-publish": "scripts/xxd-chrome-publish.mjs"
   },
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test tests/",
+    "diagrams": "node assets/diagrams/build.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -17,6 +18,7 @@
     "SKILL.md",
     "scripts",
     "references",
+    "assets",
     "agents",
     "README*.md"
   ]

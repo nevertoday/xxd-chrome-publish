@@ -9,7 +9,11 @@ Use it as a command, or as a skill in Claude Code / Codex: just say "publish my 
 
 > For extensions that are already listed. The very first listing still happens in the Chrome dashboard.
 
+![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
+
 ## What it fixes
+
+![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
 
 | Before | With xxd-chrome-publish |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 This one found a new website permission. Open the link, write one sentence about why the extension needs it, save, then publish.
 
 ## What it can't do
+
+![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
 
 Google has no API for these, so they stay in the Chrome dashboard:
 
@@ -155,6 +161,7 @@ Exit codes: `0` done · `1` error · `2` another version is in review · `3` fil
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # update (the skill link and the command both point here)
 npm test                                 # run the tests (uses a fake local store)
+npm run diagrams                         # regenerate the diagrams (after editing build.mjs)
 ```
 
 Writing permission notes reviewers accept: [references/dashboard.md](references/dashboard.md) ·

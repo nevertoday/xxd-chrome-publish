@@ -9,7 +9,11 @@ Nutzbar als Befehl oder als Skill in Claude Code / Codex: Sag einfach „Veröff
 
 > Für Erweiterungen, die schon im Store sind. Die allererste Veröffentlichung läuft weiter über das Chrome-Dashboard.
 
+![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
+
 ## Was es löst
+
+![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
 
 | Vorher | Mit xxd-chrome-publish |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 Hier wurde eine neue Website-Berechtigung gefunden. Link öffnen, in einem Satz erklären, wofür die Erweiterung sie braucht, speichern, veröffentlichen.
 
 ## Was es nicht kann
+
+![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
 
 Dafür hat Google keine API, also bleibt es im Chrome-Dashboard:
 
@@ -155,6 +161,7 @@ Exit-Codes: `0` fertig · `1` Fehler · `2` eine andere Version wird geprüft ·
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # aktualisieren (Skill-Link und Befehl zeigen beide hierher)
 npm test                                 # Tests ausführen (mit einem lokalen Fake-Store)
+npm run diagrams                         # Diagramme neu erzeugen (nach Änderungen in build.mjs)
 ```
 
 Berechtigungsnotizen, die durch die Prüfung kommen: [references/dashboard.md](references/dashboard.md) ·

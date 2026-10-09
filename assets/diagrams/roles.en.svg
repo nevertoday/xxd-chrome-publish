@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-label="The tool uploads and submits automatically through the API; the first listing, store text and privacy tab can only be done by you in the dashboard, and the tool tells you what to fill in." font-family='-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC", Helvetica, Arial, sans-serif'>
+<title>The tool uploads and submits automatically through the API; the first listing, store text and privacy tab can only be done by you in the dashboard, and the tool tells you what to fill in.</title>
+<style>
+.bg{fill:#ffffff;stroke:#d1d9e0}
+.ink{fill:#1f2328}.muted{fill:#59636e}
+.node{fill:#f6f8fa;stroke:#d1d9e0}
+.line{stroke:#818b98;fill:none}.line-fill{fill:#818b98}
+.blue-box{fill:#ddf4ff;stroke:#54aeff}.blue{fill:#0969da}.blue-line{stroke:#0969da;fill:none}.blue-fill{fill:#0969da}
+.red-box{fill:#ffebe9;stroke:#ff8182}.red{fill:#cf222e}.red-line{stroke:#cf222e;fill:none}.red-fill{fill:#cf222e}
+.amber-box{fill:#fff8c5;stroke:#d4a72c}.amber{fill:#9a6700}.amber-line{stroke:#bf8700;fill:none}.amber-fill{fill:#bf8700}
+.green-box{fill:#dafbe1;stroke:#4ac26b}.green{fill:#1a7f37}
+.lane{fill:#f6f8fa}
+.boundary{stroke:#0969da;fill:none}
+.num{fill:#1f2328}.num-text{fill:#ffffff}
+@media (prefers-color-scheme: dark){
+.bg{fill:#0d1117;stroke:#3d444d}
+.ink{fill:#e6edf3}.muted{fill:#9198a1}
+.node{fill:#151b23;stroke:#3d444d}
+.line{stroke:#656c76}.line-fill{fill:#656c76}
+.blue-box{fill:#0c2d6b;stroke:#1f6feb}.blue{fill:#4493f8}.blue-line{stroke:#4493f8}.blue-fill{fill:#4493f8}
+.red-box{fill:#3c1618;stroke:#da3633}.red{fill:#ff7b72}.red-line{stroke:#f85149}.red-fill{fill:#f85149}
+.amber-box{fill:#3a2a07;stroke:#9e6a03}.amber{fill:#e3b341}.amber-line{stroke:#d29922}.amber-fill{fill:#d29922}
+.green-box{fill:#0f2d1a;stroke:#238636}.green{fill:#3fb950}
+.lane{fill:#151b23}
+.boundary{stroke:#4493f8}
+.num{fill:#e6edf3}.num-text{fill:#0d1117}
+}</style>
+<defs><marker id="a-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="line-fill"/></marker><marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="blue-fill"/></marker><marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="red-fill"/></marker><marker id="a-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="amber-fill"/></marker></defs>
+<rect x="1" y="1" width="1198" height="358" rx="16" class="bg" stroke-width="1.2"/>
+<text x="40" y="44" font-size="20" font-weight="700" text-anchor="start" class="ink">What the tool does for you, and what only you can do</text><rect x="40" y="84" width="250" height="64" rx="10" class="blue-box" stroke-width="1.2"/><text x="58" y="112" font-size="15" font-weight="700" text-anchor="start" class="blue">xxd-chrome-publish</text><text x="58" y="133" font-size="12" font-weight="400" text-anchor="start" class="muted">CLI / AI skill</text><rect x="40" y="236" width="250" height="64" rx="10" class="amber-box" stroke-width="1.2"/><text x="58" y="264" font-size="15" font-weight="700" text-anchor="start" class="amber">You</text><text x="58" y="285" font-size="12" font-weight="400" text-anchor="start" class="muted">click in the browser</text><rect x="410" y="84" width="380" height="64" rx="10" class="node" stroke-width="1.2"/><text x="428" y="112" font-size="15" font-weight="700" text-anchor="start" class="ink">Chrome Web Store API</text><text x="428" y="133" font-size="12" font-weight="400" text-anchor="start" class="muted">upload · submit · status · cancel · rollout</text><rect x="410" y="222" width="380" height="92" rx="10" class="node" stroke-width="1.2"/><text x="428" y="250" font-size="15" font-weight="700" text-anchor="start" class="ink">Developer Dashboard (web)</text><text x="428" y="274" font-size="12" font-weight="400" text-anchor="start" class="muted">first listing · description · screenshots</text><text x="428" y="294" font-size="12" font-weight="400" text-anchor="start" class="muted">privacy tab: permission notes, data use</text><rect x="910" y="84" width="250" height="230" rx="10" class="green-box" stroke-width="1.2"/><text x="1035" y="195" font-size="16" font-weight="700" text-anchor="middle" class="green">Chrome Web Store</text><text x="1035" y="219" font-size="12" font-weight="400" text-anchor="middle" class="muted">your extension</text><path d="M294,116 H404" class="blue-line" stroke-width="2" marker-end="url(#a-blue)"/><text x="350" y="106" font-size="12" font-weight="600" text-anchor="middle" class="blue">automatic</text><path d="M794,116 H904" class="blue-line" stroke-width="2" marker-end="url(#a-blue)"/><path d="M294,276 H404" class="amber-line" stroke-width="2" marker-end="url(#a-amber)"/><text x="350" y="266" font-size="12" font-weight="600" text-anchor="middle" class="amber">by hand</text><path d="M794,268 H904" class="amber-line" stroke-width="2" marker-end="url(#a-amber)"/><path d="M110,152 V230" class="line" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a-line)"/><text x="122" y="196" font-size="12" font-weight="400" text-anchor="start" class="muted">what to fill + link</text><path d="M294,136 H350 V238 H404" class="red-line" stroke-width="1.4" stroke-dasharray="4 4"/><circle cx="350" cy="193" r="10" class="bg"/><path d="M345,188 L355,198 M355,188 L345,198" class="red-line" stroke-width="2"/><text x="368" y="197" font-size="12" font-weight="400" text-anchor="start" class="red">extensions can't control store pages</text>
+</svg>

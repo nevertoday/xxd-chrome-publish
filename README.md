@@ -9,7 +9,11 @@
 
 > 只适用于已经上架的插件。第一次上架还是要去 Chrome 后台。
 
+![发布流程：上传前的每一步出问题都会停下](assets/diagrams/flow.zh-Hans.svg)
+
 ## 它帮你解决什么
+
+![补资料这一步挪到了上传之前](assets/diagrams/before-after.zh-Hans.svg)
 
 | 以前 | 现在 |
 |---|---|
@@ -79,6 +83,8 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 这次检查发现新加了一个网站权限。打开链接，写一句插件为什么需要它，保存，再发布就行。
 
 ## 它做不到的
+
+![工具自动做的，和只能你在后台做的](assets/diagrams/roles.zh-Hans.svg)
 
 下面这些 Google 没有开放接口，只能在 Chrome 后台操作：
 
@@ -155,6 +161,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 ```bash
 git -C ~/code/xxd-chrome-publish pull   # 更新（技能软链和命令都指向这里）
 npm test                                 # 跑测试（用本地假商店，不会真的发布）
+npm run diagrams                         # 重新生成示意图（改了 build.mjs 里的文字后）
 ```
 
 权限说明怎么写才容易过审：[references/dashboard.md](references/dashboard.md) ·
