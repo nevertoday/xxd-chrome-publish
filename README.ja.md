@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[English](README.md) · [简体中文](README.zh-CN.md) · **日本語** · [한국어](README.ko.md) · [العربية](README.ar.md)
+[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · **日本語** · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
 **すでに Chrome ウェブストアに公開している拡張機能**のアップデートを、ターミナルから、あるいは
 Claude Code / Codex に頼むだけで公開できます。ビルド、チェック、パッケージ化、公開中のバージョンとの比較、

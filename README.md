@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-**English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [العربية](README.ar.md)
+**English** · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
 Publish updates to Chrome extensions that are **already on the Chrome Web Store** — from the
 terminal, or by asking Claude Code / Codex. One command builds, checks, packages, compares with

@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[English](README.md) · **简体中文** · [日本語](README.ja.md) · [한국어](README.ko.md) · [العربية](README.ar.md)
+[English](README.md) · **简体中文** · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
 给**已经上架 Chrome 应用商店**的插件发更新：在终端里敲一条命令，或者直接跟 Claude Code / Codex 说一声，
 它就会构建、跑检查、打包、和商店上的版本对比，然后上传、提交审核。

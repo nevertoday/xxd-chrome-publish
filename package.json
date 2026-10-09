@@ -3,9 +3,21 @@
   "version": "1.0.0",
   "description": "Update and publish already-listed Chrome extensions from the command line, with a preflight that catches what the Web Store would reject.",
   "type": "module",
-  "bin": { "xxd-chrome-publish": "scripts/xxd-chrome-publish.mjs" },
-  "scripts": { "test": "node --test tests/" },
-  "engines": { "node": ">=18" },
+  "bin": {
+    "xxd-chrome-publish": "scripts/xxd-chrome-publish.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT",
-  "files": ["SKILL.md", "scripts", "references", "agents", "README.md", "README.zh-CN.md", "README.ja.md", "README.ko.md", "README.ar.md"]
+  "files": [
+    "SKILL.md",
+    "scripts",
+    "references",
+    "agents",
+    "README*.md"
+  ]
 }

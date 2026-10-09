@@ -2,7 +2,7 @@
 
 <div dir="rtl">
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · **العربية**
+[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · **العربية**
 
 انشر تحديثات إضافات Chrome **المنشورة مسبقًا على سوق Chrome الإلكتروني** من سطر الأوامر، أو اطلب ذلك من
 Claude Code أو Codex. أمر واحد يبني الإضافة ويفحصها ويحزمها، ثم يقارنها بالنسخة المنشورة، ويرفعها، ويرسلها للمراجعة.

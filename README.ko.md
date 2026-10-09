@@ -1,6 +1,6 @@
 # xxd-chrome-publish
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · **한국어** · [العربية](README.ar.md)
+[English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · **한국어** · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
 **이미 Chrome 웹 스토어에 등록된 확장 프로그램**의 업데이트를 터미널에서, 또는 Claude Code / Codex에게
 말 한마디로 배포합니다. 빌드, 검사, 패키징, 현재 공개된 버전과의 비교, 업로드, 심사 제출까지 명령 하나로 끝납니다.
