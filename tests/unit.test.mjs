@@ -4,7 +4,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { planVersion, compareVersions, bumpVersion, isValidVersion } from "../scripts/lib/version.mjs";
 import { createZip, readZip, crxToZip } from "../scripts/lib/zip.mjs";
-import { collectFiles, packageExtension, setManifestVersionText, globToRegExp } from "../scripts/lib/packager.mjs";
+import { collectFiles, packageExtension, setManifestVersionText, globToRegExp, isLicenseFile } from "../scripts/lib/packager.mjs";
+import { localeInfo, listingActions, folderReader } from "../scripts/lib/locales.mjs";
+import { findForeignExtensionIds } from "../scripts/lib/first-release.mjs";
 import { diffManifests, dashboardActions, findPermissionUsage } from "../scripts/lib/manifest-diff.mjs";
 import { normalizeExtensionId, normalizePublisherId, projectCommands } from "../scripts/lib/project.mjs";
 import { tempDir, writeTree, baseManifest, makeCrx } from "./helpers.mjs";
@@ -242,4 +244,137 @@ test("missing web-accessible resources warn; missing service workers are errors"
   });
   const { missing } = collectFiles(dir, JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"))));
   assert.deepEqual(missing, [{ from: "web_accessible_resources", ref: "data/x.json", severity: "warning" }]);
+});
+
+// ---------- licences ----------
+
+test("licence names: root files, per-library files, bundler output; not runtime files", () => {
+  for (const name of ["LICENSE", "LICENSE.md", "LICENCE.txt", "COPYING", "NOTICE", "qrcode.LICENSE",
+    "bundle.js.LICENSE.txt", "THIRD_PARTY_NOTICES.txt", "LICENSE-MIT", "vendor/pdf.NOTICE"]) {
+    assert.ok(isLicenseFile(name), name);
+  }
+  for (const name of ["notice.js", "license.html", "license-badge.png", "licensing.js", "README.md", "noticeboard.txt"]) {
+    assert.ok(!isLicenseFile(name), name);
+  }
+});
+
+test("packager ships licences nothing references (the vendor/*.LICENSE that went missing)", () => {
+  const dir = writeTree(tempDir(), {
+    "manifest.json": baseManifest(),
+    "background.js": 'importScripts("vendor/qrcode.min.js", "lib/notice.js"); chrome.scripting.executeScript({ files: ["dist/bundle.js"] });',
+    "LICENSE": "MIT",
+    "vendor/qrcode.min.js": "!function(){}",
+    "vendor/qrcode.LICENSE": "MIT qrcode",
+    "lib/notice.js": "export {}",
+    "lib/unused-notice.js": "export {}",
+    "dist/bundle.js": "x",
+    "dist/bundle.js.LICENSE.txt": "/*! react */",
+    "docs/LICENSE-docs": "CC",
+    "tmp/profile/LICENSE": "chrome profile junk",
+  });
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, "manifest.json")));
+  const { files, licenses, unlicensed } = collectFiles(dir, manifest);
+  for (const expected of ["LICENSE", "vendor/qrcode.LICENSE", "dist/bundle.js.LICENSE.txt", "lib/notice.js"]) {
+    assert.ok(files.includes(expected), `missing ${expected}`);
+  }
+  for (const unexpected of ["lib/unused-notice.js", "docs/LICENSE-docs", "tmp/profile/LICENSE"]) {
+    assert.ok(!files.includes(unexpected), `should not ship ${unexpected}`);
+  }
+  assert.deepEqual(licenses, ["LICENSE", "dist/bundle.js.LICENSE.txt", "vendor/qrcode.LICENSE"]);
+  assert.deepEqual(unlicensed, []);
+});
+
+test("third-party files without a licence are reported; a header comment counts", () => {
+  const dir = writeTree(tempDir(), {
+    "manifest.json": baseManifest(),
+    "background.js": 'importScripts("lib/sortable.min.js", "lib/lunar.min.js", "lib/fflate.min.js");',
+    "lib/sortable.min.js": "!function(){}",
+    "lib/lunar.min.js": "/*! lunar.js | (c) 2020 6tail | MIT */!function(){}",
+    "lib/fflate.min.js": "x",
+    "lib/fflate.LICENSE": "MIT",
+  });
+  const { unlicensed } = collectFiles(dir, JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"))));
+  assert.deepEqual(unlicensed, ["lib/sortable.min.js"]);
+});
+
+test("build output gets the project's licence and bundled dependencies' licences", () => {
+  const project = writeTree(tempDir(), {
+    "LICENSE": "MIT project",
+    "NOTICE.md": "notice",
+    "package.json": { dependencies: { marked: "1", "@scope/ui": "1" }, devDependencies: { vitest: "1" } },
+    "node_modules/marked/LICENSE.md": "MIT marked",
+    "node_modules/@scope/ui/LICENSE": "MIT ui",
+    "node_modules/vitest/LICENSE": "dev only",
+    "dist/manifest.json": baseManifest(),
+    "dist/background.js": "",
+  });
+  const result = packageExtension(path.join(project, "dist"), { outputDir: tempDir(), projectRoot: project, bundled: true });
+  assert.deepEqual(result.licenses, ["LICENSE", "NOTICE.md", "licenses/marked/LICENSE.md", "licenses/scope-ui/LICENSE"]);
+  const zip = readZip(fs.readFileSync(result.zipPath));
+  assert.equal(zip.read("licenses/marked/LICENSE.md").toString(), "MIT marked");
+  assert.equal(zip.read("LICENSE").toString(), "MIT project");
+
+  const unbundled = packageExtension(path.join(project, "dist"), { outputDir: tempDir(), projectRoot: project, bundled: false });
+  assert.deepEqual(unbundled.licenses, ["LICENSE", "NOTICE.md"]);
+});
+
+// ---------- languages ----------
+
+function localized(messages, manifest = {}) {
+  const files = { "manifest.json": baseManifest({ name: "__MSG_appName__", description: "__MSG_appDesc__", default_locale: "en", ...manifest }) };
+  for (const [locale, entries] of Object.entries(messages)) {
+    files[`_locales/${locale}/messages.json`] = Object.fromEntries(Object.entries(entries).map(([key, message]) => [key, { message }]));
+  }
+  const dir = writeTree(tempDir(), files);
+  return localeInfo(JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"))), folderReader(dir));
+}
+
+test("locale info resolves name/summary per language and flags fallbacks and load errors", () => {
+  const info = localized({
+    en: { appName: "Saver", appDesc: "Save pages" },
+    ja: { appName: "セーバー" },
+    zh_CN: { APPNAME: "保存器", appDesc: "保存网页" },
+  });
+  assert.deepEqual(info.locales.map((entry) => entry.locale), ["en", "ja", "zh_CN"]);
+  assert.equal(info.locales[2].name, "保存器", "message names are case-insensitive");
+  assert.equal(info.locales[1].description, "Save pages", "ja falls back to en");
+  assert.ok(info.problems.some((problem) => problem.locale === "ja" && problem.severity === "warning" && /falls back/.test(problem.text)));
+
+  const broken = localized({ en: { appName: "Saver" } });
+  assert.ok(broken.problems.some((problem) => problem.severity === "error" && /appDesc/.test(problem.text)));
+
+  const long = localized({ en: { appName: "Saver", appDesc: "x".repeat(140) } });
+  assert.ok(long.problems.every((problem) => problem.severity === "warning"), "length limits warn — the store has accepted longer");
+});
+
+test("listing check: every language once, then only new ones", () => {
+  const info = localized({ en: { appName: "A", appDesc: "a" }, de: { appName: "B", appDesc: "b" } });
+  const first = listingActions(info, null, []);
+  assert.equal(first.length, 1);
+  assert.ok(first[0].blocking);
+  assert.deepEqual(first[0].locales.map((entry) => entry.locale), ["en", "de"]);
+
+  assert.deepEqual(listingActions(info, null, ["en", "de"]), []);
+
+  const store = localized({ en: { appName: "A", appDesc: "a" } });
+  const added = listingActions(info, store, ["en", "de"]);
+  assert.ok(added[0].blocking, "a language the published package lacked has an empty page, even if confirmed");
+  assert.match(added[0].title, /new since the published version: de/);
+
+  const changedStore = localized({ en: { appName: "A", appDesc: "old" }, de: { appName: "B", appDesc: "b" } });
+  const changed = listingActions(info, changedStore, ["en", "de"]);
+  assert.deepEqual(changed.map((action) => action.blocking), [false]);
+  assert.match(changed[0].title, /changed in en/);
+
+  assert.deepEqual(listingActions(localeInfo(baseManifest(), folderReader(tempDir())), null, []), [], "single-language items aren't gated");
+});
+
+test("other extensions' IDs in the code are found; the own ID is not", () => {
+  const own = "abcdefghijklmnopabcdefghijklmnop";
+  const dir = writeTree(tempDir(), {
+    "a.js": `const self = "${own}"; const redirect = "https://ponmlkjihgfedcbaponmlkjihgfedcba.chromiumapp.org/";`,
+    "b.js": "const notAnId = 'abcdefghijklmnopabcdefghijklmnopq';",
+  });
+  const hits = findForeignExtensionIds(dir, ["a.js", "b.js"], own);
+  assert.deepEqual(hits.map((hit) => [hit.file, hit.id]), [["a.js", "ponmlkjihgfedcbaponmlkjihgfedcba"]]);
 });

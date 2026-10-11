@@ -221,3 +221,82 @@ test("legacy flags still work (--status, --dry-run)", async () => {
   assert.equal(pack.code, 0, pack.stderr);
   assert.equal(store.calls("upload").length, 0);
 });
+
+const localizedFiles = (locales) => Object.fromEntries(locales.map((locale) => [
+  `_locales/${locale}/messages.json`, { appName: { message: `Name ${locale}` }, appDesc: { message: `Summary ${locale}` } },
+]));
+const localizedManifest = (overrides = {}) => baseManifest({ name: "__MSG_appName__", description: "__MSG_appDesc__", default_locale: "en", ...overrides });
+function setupLocalizedItem(version, locales) {
+  setupItem({ storeManifest: localizedManifest({ version }) });
+  const extra = Object.fromEntries(Object.entries(localizedFiles(locales)).map(([name, json]) => [name, JSON.stringify(json)]));
+  store.items[EXT_ID].crx = makeCrx(localizedManifest({ version }), extra);
+}
+
+test("multi-language: listing pages are a required check once, then only for new languages", async () => {
+  setupLocalizedItem("1.0.0", ["en", "ja"]);
+  const dir = extension(localizedFiles(["en", "ja"]), localizedManifest());
+  const stopped = await run([], dir);
+  assert.equal(stopped.code, 3, stopped.stdout + stopped.stderr);
+  assert.equal(store.calls("upload").length, 0);
+  assert.match(stopped.stdout, /\[required\] Check the store listing in these 2 languages: en, ja/);
+  assert.match(stopped.stdout, /ja\s+Name ja — Summary ja/);
+  assert.match(stopped.stdout, /edit\/listing/);
+  assert.match(stopped.stdout, /✗ dashboard\s+NOT done/);
+
+  const ok = await run(["--dashboard-ready"], dir);
+  assert.equal(ok.code, 0, ok.stdout + ok.stderr);
+  const config = JSON.parse(fs.readFileSync(path.join(dir, ".chrome-publish.json")));
+  assert.deepEqual(config.listingLocales, ["en", "ja"]);
+  assert.match(ok.stdout, /✓ dashboard\s+1 required item — you confirmed/);
+  assert.match(ok.stdout, /✓ package\s+uploaded 1\.0\.1/);
+  assert.match(ok.stdout, /✓ review\s+submitted — PENDING_REVIEW \(not live until Google approves it\)/);
+
+  setupLocalizedItem("1.0.1", ["en", "ja"]);
+  const again = await run(["preflight"], dir);
+  assert.equal(again.code, 0, again.stdout + again.stderr);
+  assert.match(again.stdout, /READY to publish/);
+
+  writeTree(dir, localizedFiles(["ko"]));
+  const added = await run(["preflight"], dir);
+  assert.equal(added.code, 3, added.stdout);
+  assert.match(added.stdout, /this language: ko — .*new since the published version: ko/);
+});
+
+test("a locale that would break loading stops before upload", async () => {
+  setupItem();
+  const dir = extension({ "_locales/en/messages.json": { appName: { message: "x" } } }, localizedManifest());
+  const result = await run([], dir);
+  assert.equal(result.code, 1);
+  assert.match(result.stdout, /appDesc/);
+  assert.equal(store.calls("upload").length, 0);
+});
+
+test("first release under a new ID: allow-lists, test account and support page come first", async () => {
+  setupItem({ status: {} });
+  store.items[EXT_ID].crx = null;
+  const manifest = baseManifest({ permissions: ["storage", "identity"] });
+  const dir = extension({
+    "background.js": 'chrome.identity.launchWebAuthFlow({ url: "https://auth.example.com/?redirect=https://ponmlkjihgfedcbaponmlkjihgfedcba.chromiumapp.org/" });',
+  }, manifest);
+  const result = await run([], dir);
+  assert.equal(result.code, 3, result.stdout + result.stderr);
+  assert.equal(store.calls("upload").length, 0);
+  assert.match(result.stdout, /First release under abcdefghijklmnopabcdefghijklmnop/);
+  assert.match(result.stdout, /abcdefghijklmnopabcdefghijklmnop\.chromiumapp\.org/);
+  assert.match(result.stdout, /background\.js:1/, "points at the old ID in the code");
+  assert.match(result.stdout, /test account/);
+  assert.match(result.stdout, /no homepage_url/);
+
+  const ok = await run(["--dashboard-ready"], dir);
+  assert.equal(ok.code, 0, ok.stdout + ok.stderr);
+  assert.equal(store.calls("upload").length, 1);
+});
+
+test("--json reports the three stages separately", async () => {
+  setupItem({ publishError: "Your submission does not meet the requirements to be published in the store." });
+  const result = await run(["--json"], extension());
+  const json = JSON.parse(result.stdout);
+  assert.equal(json.stages.uploaded.done, true);
+  assert.equal(json.stages.review.done, false);
+  assert.equal(json.stages.dashboard.done, true);
+});

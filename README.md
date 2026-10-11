@@ -22,6 +22,8 @@
 | 不小心传了旧的构建 | 先跑你的构建和测试脚本，失败就不传 |
 | 版本号和商店撞了被拒 | 同时参考代码和商店，算出下一个版本号 |
 | 记不清哪些插件有改动还没发 | 一张表全部列出来 |
+| 多语言安装包传上去了，其他语言的商店页还是空的 | 逐个列出每种语言，后台确认填好才放行 |
+| 许可文件没打进包 | LICENSE、NOTICE 和第三方库的许可自动打包 |
 
 ## 快速开始
 
@@ -78,9 +80,13 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
   => NEEDS DASHBOARD
+  stages
+    ✗ dashboard  NOT done — 1 required item above
+    ✗ package    not uploaded
+    ✗ review     not submitted
 ```
 
-这次检查发现新加了一个网站权限。打开链接，写一句插件为什么需要它，保存，再发布就行。
+这次检查发现新加了一个网站权限。打开链接，写一句插件为什么需要它，保存，再发布就行。最后的 stages 三行分开报：后台资料存了没有、安装包传了没有、提交审核了没有。
 
 ## 它做不到的
 
@@ -88,11 +94,11 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 下面这些 Google 没有开放接口，只能在 Chrome 后台操作：
 
-- 第一次上架
-- 商店描述和截图
+- 第一次上架（交给上架资料流程；拿到新 ID 后，本工具会先查登录白名单、审核测试账号、公开支持页面）
+- 商店描述和截图（每种语言各一页）
 - 隐私页：权限说明、数据用途、隐私政策链接
 
-工具会告诉你具体要填什么、去哪里填。浏览器 AI 助手也替你填不了，因为 Chrome 不允许任何插件操作商店页面。
+工具会告诉你具体要填什么、去哪里填。Chrome 不允许插件操作商店页面，所以浏览器插件里的 AI 助手填不了；但能直接操作电脑的 AI（原生电脑操作）可以替你填写、上传、保存，再回头逐项核对。
 
 ## 细节（点开看）
 

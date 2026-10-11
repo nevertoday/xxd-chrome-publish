@@ -22,6 +22,8 @@ Compila, empaqueta, sube y envía a revisión, y te avisa *antes de subir nada* 
 | Subes un build viejo sin darte cuenta | Primero ejecuta tus scripts de build y tests; si fallan, no sube nada |
 | El número de versión choca con el de la tienda | Calcula la siguiente versión mirando tu código y la tienda |
 | No recuerdas qué extensiones tienen cambios sin publicar | Una tabla te las muestra todas |
+| Subes un paquete en varios idiomas, pero las páginas de la tienda de los otros idiomas siguen vacías | Lista cada idioma; no sube nada hasta que los revises en el panel |
+| Los archivos de licencia no entran en el zip | LICENSE, NOTICE y las licencias de terceros se incluyen solos |
 
 ## Empezar
 
@@ -78,9 +80,13 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
   => NEEDS DASHBOARD
+  stages
+    ✗ dashboard  NOT done — 1 required item above
+    ✗ package    not uploaded
+    ✗ review     not submitted
 ```
 
-Aquí encontró un permiso nuevo para un sitio web. Abre el enlace, escribe una frase sobre por qué lo necesita la extensión, guarda y publica.
+Aquí encontró un permiso nuevo para un sitio web. Abre el enlace, escribe una frase sobre por qué lo necesita la extensión, guarda y publica. Las tres últimas líneas separan las etapas —panel guardado, paquete subido, enviado a revisión— para que no se esconda un paso que no ocurrió.
 
 ## Lo que no puede hacer
 
@@ -88,11 +94,11 @@ Aquí encontró un permiso nuevo para un sitio web. Abre el enlace, escribe una 
 
 Google no ofrece API para esto, así que se queda en el panel de Chrome:
 
-- la primera publicación
-- la descripción y las capturas de la tienda
+- la primera publicación (es otro flujo; cuando ya existe el nuevo ID, la primera versión aquí revisa antes las listas de acceso del inicio de sesión, una cuenta de prueba para los revisores y una página de soporte pública)
+- la descripción y las capturas de la tienda (una página por idioma)
 - la pestaña de privacidad: notas de permisos, uso de datos, enlace a la política de privacidad
 
-La herramienta te dice exactamente qué rellenar y dónde. Un agente de navegador tampoco puede hacerlo por ti: Chrome no deja que las extensiones controlen las páginas de la tienda.
+La herramienta te dice exactamente qué rellenar y dónde. Chrome no deja que las extensiones controlen las páginas de la tienda, así que un agente que funciona como extensión del navegador no puede; una IA con control nativo del ordenador sí: escribe, sube, guarda y luego vuelve a leer la página para comprobarlo.
 
 ## Detalles
 

@@ -22,6 +22,8 @@ Use it as a command, or as a skill in Claude Code / Codex: just say "publish my 
 | An old build gets uploaded by mistake | Your build and test scripts run first; if they fail, nothing is uploaded |
 | The version number clashes with the store | The next version is worked out from both your code and the store |
 | You forget which extensions have unreleased changes | One table lists them all |
+| A multi-language package goes up, but the other languages' store pages stay empty | Every language is listed; nothing uploads until you've checked them in the dashboard |
+| Licence files are left out of the zip | LICENSE, NOTICE and third-party licences are packed automatically |
 
 ## Quick start
 
@@ -78,9 +80,13 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
   => NEEDS DASHBOARD
+  stages
+    ✗ dashboard  NOT done — 1 required item above
+    ✗ package    not uploaded
+    ✗ review     not submitted
 ```
 
-This one found a new website permission. Open the link, write one sentence about why the extension needs it, save, then publish.
+This one found a new website permission. Open the link, write one sentence about why the extension needs it, save, then publish. The last three lines keep the stages apart — dashboard saved, package uploaded, submitted for review — so a step that didn't happen can't hide.
 
 ## What it can't do
 
@@ -88,11 +94,11 @@ This one found a new website permission. Open the link, write one sentence about
 
 Google has no API for these, so they stay in the Chrome dashboard:
 
-- the first listing
-- store description and screenshots
+- the first listing (a separate workflow; once the new ID exists, the first release here checks sign-in allow-lists, a reviewer test account and a public support page first)
+- store description and screenshots (one page per language)
 - the privacy tab: permission notes, data use, privacy policy link
 
-The tool tells you exactly what to fill in, and where. A browser agent can't do it for you either — Chrome blocks extensions from controlling store pages.
+The tool tells you exactly what to fill in, and where. Chrome blocks extensions from controlling store pages, so a browser-extension agent can't fill them — but an AI with native computer use can: it types, uploads, saves, then reads the page back to check.
 
 ## Details
 

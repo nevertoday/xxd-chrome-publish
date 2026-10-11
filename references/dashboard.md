@@ -4,6 +4,21 @@ Everything here lives in the Developer Dashboard
 (`https://chrome.google.com/webstore/devconsole/<publisher>/<item>/edit/<tab>`) and has no API.
 Preflight prints the direct link for the tab that needs work.
 
+## Filling it
+
+Chrome refuses to let any *extension* script Web Store pages, Claude in Chrome included. Native
+computer use (OS-level screenshots, mouse, keyboard) and DevTools-protocol drivers (a
+chrome-devtools MCP on the user's signed-in Chrome) are not extensions and can fill the
+dashboard. The loop is the same either way:
+
+1. open the tab preflight printed; for the listing, pick the language in the selector;
+2. type the text, upload screenshots through the file picker;
+3. press **Save draft** and wait for the confirmation;
+4. reload, and read back every field you touched — per language — before saying it's saved.
+
+Unsaved fields count as empty when the CLI submits. With no such tool, hand the user the link
+and the exact text, and wait for them to confirm.
+
 ## Privacy practices tab (`edit/privacy`)
 
 | Field | When the store insists |
@@ -47,10 +62,37 @@ namespace. Broad hosts (`<all_urls>`, `*://*/*`) trigger an in-depth review — 
 
 ## Store listing tab (`edit/listing`)
 
-Description, category, screenshots, promo images, and per-language listings. When the manifest
-`name`/`description` change, check the listing still matches. Warning
-`INCONSISTENT_LOCALE_METADATA` after submit means localized descriptions describe different
-features; it doesn't block review but can be judged as misleading metadata.
+Description, category, screenshots, promo images — once per language. Every folder in the
+package's `_locales` becomes a language in the selector at the top of this tab:
+
+| Per language | Comes from | What to check |
+|---|---|---|
+| Name | `_locales/<lang>/messages.json` (the manifest's `__MSG_…__` key) | matches the package — fix the package, not the dashboard |
+| Summary | same, the manifest `description` key (132 characters documented) | matches the package |
+| Detailed description | dashboard only | present, written in that language, same features as the default language |
+| Screenshots | dashboard only | a global set is fine if the UI doesn't change with the language; a translated UI needs screenshots in that language |
+
+An empty detailed description or no screenshots on a language page is what preflight's
+`[required] Check the store listing in …` item is for. Uploading the multi-language package does
+not fill those pages. Warning `INCONSISTENT_LOCALE_METADATA` after submit means the languages
+describe different features; it doesn't block review but can be judged as misleading metadata.
+
+When the manifest `name`/`description` change, check the listing still matches.
+
+## First release under a new ID
+
+The first-listing workflow (`cx-chrome-store-submission`) prepares the material and the item is
+created in the dashboard. Before the first version is submitted under the new ID:
+
+- **Allow-lists.** `chrome-extension://<ID>` in backend CORS / allowed origins;
+  `https://<ID>.chromiumapp.org/` in the OAuth client's redirect URIs (`launchWebAuthFlow`);
+  any membership or login server that whitelists extension IDs. Preflight lists other extension
+  IDs in the code — usually the unpacked dev ID these were set up with.
+- **Test instructions.** If anything sits behind sign-in, give reviewers a working account and the
+  steps to reach the feature. Log in with it yourself first. A reviewer stuck at a login screen
+  rejects.
+- **Support page and privacy policy.** Both URLs must open for the public without signing in.
+  `curl -sIL <url>` should end in 200, not a login redirect.
 
 ## Other dashboard-only actions
 

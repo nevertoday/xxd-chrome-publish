@@ -22,6 +22,8 @@ Utilisez-la comme commande, ou comme skill dans Claude Code / Codex : dites simp
 | Un vieux build part par erreur | Vos scripts de build et de test tournent d'abord ; s'ils échouent, rien n'est envoyé |
 | Le numéro de version entre en conflit avec le store | La version suivante est calculée d'après votre code et le store |
 | Vous oubliez quelles extensions ont des changements non publiés | Un seul tableau les liste toutes |
+| Un paquet multilingue part, mais les pages du store des autres langues restent vides | Chaque langue est listée ; rien ne part tant que vous ne les avez pas vérifiées dans le tableau de bord |
+| Les fichiers de licence manquent dans le zip | LICENSE, NOTICE et les licences tierces sont ajoutés automatiquement |
 
 ## Démarrer
 
@@ -78,9 +80,13 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
   => NEEDS DASHBOARD
+  stages
+    ✗ dashboard  NOT done — 1 required item above
+    ✗ package    not uploaded
+    ✗ review     not submitted
 ```
 
-Ici, elle a trouvé une nouvelle autorisation pour un site. Ouvrez le lien, écrivez une phrase sur la raison de ce besoin, enregistrez, puis publiez.
+Ici, elle a trouvé une nouvelle autorisation pour un site. Ouvrez le lien, écrivez une phrase sur la raison de ce besoin, enregistrez, puis publiez. Les trois dernières lignes séparent les étapes — tableau de bord enregistré, paquet envoyé, soumis à l'examen — pour qu'aucune étape manquante ne passe inaperçue.
 
 ## Ce qu'elle ne fait pas
 
@@ -88,11 +94,11 @@ Ici, elle a trouvé une nouvelle autorisation pour un site. Ouvrez le lien, écr
 
 Google ne propose pas d'API pour ceci, donc ça reste dans le tableau de bord Chrome :
 
-- la première publication
-- la description et les captures d'écran du store
+- la première publication (c'est un autre processus ; une fois le nouvel ID créé, la première version ici vérifie d'abord les listes d'autorisation de connexion, un compte de test pour les examinateurs et une page d'assistance publique)
+- la description et les captures d'écran du store (une page par langue)
 - l'onglet confidentialité : notes d'autorisations, utilisation des données, lien vers la politique de confidentialité
 
-L'outil vous dit exactement quoi remplir, et où. Un agent de navigateur ne peut pas le faire à votre place : Chrome interdit aux extensions de piloter les pages du store.
+L'outil vous dit exactement quoi remplir, et où. Chrome interdit aux extensions de piloter les pages du store : un agent qui tourne comme extension du navigateur ne peut donc pas le faire. Une IA qui contrôle directement l'ordinateur, si : elle saisit, envoie, enregistre, puis relit la page pour vérifier.
 
 ## Détails
 

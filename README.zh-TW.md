@@ -22,6 +22,8 @@
 | 不小心上傳了舊的建置 | 先執行你的建置和測試腳本，失敗就不上傳 |
 | 版本號和商店衝突被退回 | 同時參考程式碼和商店，算出下一個版本號 |
 | 記不清哪些擴充功能有變更還沒發布 | 一張表全部列出來 |
+| 多語言套件上傳了，其他語言的商店頁面還是空的 | 逐一列出每種語言，資訊主頁確認填好才放行 |
+| 授權檔案沒打進套件 | LICENSE、NOTICE 和第三方函式庫的授權自動打包 |
 
 ## 快速開始
 
@@ -78,9 +80,13 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
   => NEEDS DASHBOARD
+  stages
+    ✗ dashboard  NOT done — 1 required item above
+    ✗ package    not uploaded
+    ✗ review     not submitted
 ```
 
-這次檢查發現新增了一個網站權限。打開連結，寫一句擴充功能為什麼需要它，儲存，再發布就好。
+這次檢查發現新增了一個網站權限。打開連結，寫一句擴充功能為什麼需要它，儲存，再發布就好。最後的 stages 三行分開回報：資訊主頁資料存了沒、套件傳了沒、送審了沒。
 
 ## 它做不到的
 
@@ -88,11 +94,11 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 下面這些 Google 沒有開放 API，只能在 Chrome 資訊主頁操作：
 
-- 第一次上架
-- 商店說明和螢幕截圖
+- 第一次上架（交給上架資料流程；拿到新 ID 後，本工具會先檢查登入白名單、審核測試帳號、公開支援頁面）
+- 商店說明和螢幕截圖（每種語言各一頁）
 - 隱私權分頁：權限說明、資料用途、隱私權政策連結
 
-工具會告訴你具體要填什麼、到哪裡填。瀏覽器 AI 助理也沒辦法代填，因為 Chrome 不允許任何擴充功能操作商店頁面。
+工具會告訴你具體要填什麼、到哪裡填。Chrome 不允許擴充功能操作商店頁面，所以瀏覽器擴充功能裡的 AI 助理填不了；但能直接操作電腦的 AI（原生電腦操作）可以幫你填寫、上傳、儲存，再回頭逐項核對。
 
 ## 細節（點開看）
 

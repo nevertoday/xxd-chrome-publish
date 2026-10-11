@@ -22,6 +22,8 @@ Nutzbar als Befehl oder als Skill in Claude Code / Codex: Sag einfach „Veröff
 | Versehentlich wird ein alter Build hochgeladen | Deine Build- und Test-Skripte laufen zuerst; schlagen sie fehl, wird nichts hochgeladen |
 | Die Versionsnummer kollidiert mit dem Store | Die nächste Version wird aus deinem Code und dem Store ermittelt |
 | Du weißt nicht mehr, welche Erweiterungen unveröffentlichte Änderungen haben | Eine Tabelle zeigt alle |
+| Ein mehrsprachiges Paket geht hoch, aber die Store-Seiten der anderen Sprachen bleiben leer | Jede Sprache wird aufgelistet; hochgeladen wird erst, wenn du sie im Dashboard geprüft hast |
+| Lizenzdateien fehlen im Zip | LICENSE, NOTICE und Lizenzen von Drittbibliotheken werden automatisch eingepackt |
 
 ## Schnellstart
 
@@ -78,9 +80,13 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
   => NEEDS DASHBOARD
+  stages
+    ✗ dashboard  NOT done — 1 required item above
+    ✗ package    not uploaded
+    ✗ review     not submitted
 ```
 
-Hier wurde eine neue Website-Berechtigung gefunden. Link öffnen, in einem Satz erklären, wofür die Erweiterung sie braucht, speichern, veröffentlichen.
+Hier wurde eine neue Website-Berechtigung gefunden. Link öffnen, in einem Satz erklären, wofür die Erweiterung sie braucht, speichern, veröffentlichen. Die letzten drei Zeilen halten die Schritte auseinander – Dashboard gespeichert, Paket hochgeladen, zur Prüfung eingereicht –, damit kein fehlender Schritt untergeht.
 
 ## Was es nicht kann
 
@@ -88,11 +94,11 @@ Hier wurde eine neue Website-Berechtigung gefunden. Link öffnen, in einem Satz 
 
 Dafür hat Google keine API, also bleibt es im Chrome-Dashboard:
 
-- die erste Veröffentlichung
-- Store-Beschreibung und Screenshots
+- die erste Veröffentlichung (ein eigener Ablauf; sobald die neue ID existiert, prüft die erste Version hier zuerst Login-Allowlists, ein Testkonto für die Prüfer und eine öffentliche Support-Seite)
+- Store-Beschreibung und Screenshots (eine Seite pro Sprache)
 - der Datenschutz-Tab: Notizen zu Berechtigungen, Datennutzung, Link zur Datenschutzerklärung
 
-Das Tool sagt dir genau, was du wo eintragen musst. Ein Browser-Agent kann es dir auch nicht abnehmen: Chrome verbietet Erweiterungen, Store-Seiten zu steuern.
+Das Tool sagt dir genau, was du wo eintragen musst. Chrome verbietet Erweiterungen, Store-Seiten zu steuern – ein Agent als Browser-Erweiterung kann es also nicht. Eine KI mit nativer Computersteuerung schon: Sie tippt, lädt hoch, speichert und liest die Seite danach zur Kontrolle noch einmal.
 
 ## Details
 

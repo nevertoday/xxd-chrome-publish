@@ -5,6 +5,12 @@
 // the manifest, HTML (src/href), CSS url(), JS imports/importScripts/getURL/fetch,
 // and any JS string literal that names a file that exists — which catches
 // chrome.scripting.executeScript({ files: [...] }) and lazy-inject maps.
+//
+// Nothing references a licence file, so they are collected separately: the
+// root LICENSE/NOTICE, licence files in every folder that ships code (e.g.
+// vendor/qrcode.LICENSE next to vendor/qrcode.min.js, bundle.js.LICENSE.txt),
+// and — for packages built from elsewhere — the project's own licence and those
+// of bundled npm dependencies.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -21,6 +27,27 @@ const ROOT_TOOLING_FILE =
   /^(?:package(?:-lock)?\.json|tsconfig.*\.json|jsconfig\.json|\.?eslintrc.*|.*\.config\.(?:c|m)?js|vite\.config\..*|webpack\..*|rollup\..*|babel\.config\..*|jest\.config\..*|vitest\.config\..*|playwright\.config\..*|bun\.lockb?|pnpm-lock\.yaml|yarn\.lock|\.chrome-publish\.json)$/i;
 const LITERAL_PATH =
   /["'`](\.{0,2}\/?[\w@][\w@.\-/]*\.(?:js|mjs|css|html?|json|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|mp3|ogg|opus|wav|m4a|webm|mp4|wasm|txt))["'`]/g;
+
+const LICENSE_WORD =
+  /(?:^|[._-])(?:LICEN[CS]E|COPYING|NOTICE|COPYRIGHT|AUTHORS|PATENTS|THIRD[._-]?PARTY[._-]?(?:NOTICES?|LICEN[CS]ES?)?)S?(?:[._-]|$)/i;
+const LICENSE_STEM = /^(?:LICEN[CS]E|COPYING|NOTICE)(?:[._-]|$)/i;
+// notice.js, license.html, license-badge.png are runtime files, not licences
+const ASSET_EXT = /\.(?:[cm]?jsx?|tsx?|css|s[ac]ss|less|html?|json|map|vue|svelte|png|jpe?g|gif|svg|webp|ico|bmp|avif|woff2?|ttf|otf|eot|mp3|ogg|opus|wav|m4a|webm|mp4|wasm)$/i;
+const LICENSE_DIRS = /^(?:licen[cs]es|third[._-]?party[._-]?(?:licen[cs]es|notices))$/i;
+const LICENSE_TEXT_EXT = new Set(["", "txt", "md", "markdown", "rst"]);
+// Third-party code: minified files or anything under a vendor-style folder.
+const VENDORED = /(?:\.min\.(?:m?js|css)$|(?:^|\/)(?:vendor|vendors|third[_-]?party|external|libs?\/(?:[^/]+\/)*[^/]+\.min\.))/i;
+const HEADER_LICENSE = /@licen[cs]e|@preserve|licen[cs]ed under|copyright|\(c\)\s*\d{4}|SPDX-License-Identifier/i;
+
+/** LICENSE, NOTICE.md, COPYING, qrcode.LICENSE, bundle.js.LICENSE.txt, THIRD_PARTY_NOTICES … */
+export function isLicenseFile(name) {
+  const base = path.posix.basename(String(name));
+  if (ASSET_EXT.test(base)) return false;
+  if (LICENSE_STEM.test(base)) return true;
+  if (!LICENSE_WORD.test(base)) return false;
+  const ext = path.posix.extname(base).slice(1).toLowerCase();
+  return LICENSE_TEXT_EXT.has(ext) || LICENSE_WORD.test(`.${ext}`);
+}
 
 export function globToRegExp(glob) {
   let pattern = "";
@@ -249,7 +276,105 @@ export function collectFiles(rootDir, manifest, options = {}) {
   }
   drain();
 
-  return { files: Array.from(files).sort(), missing };
+  // Licence files: in the root and in every folder (and its parents) that ships
+  // a file. Nothing references them, so the walk above never finds them.
+  const folders = new Set([""]);
+  for (const file of files) {
+    for (let dir = path.posix.dirname(file); dir !== "."; dir = path.posix.dirname(dir)) folders.add(dir);
+  }
+  for (const dir of folders) {
+    const absolute = path.join(rootDir, dir);
+    for (const entry of fs.readdirSync(absolute, { withFileTypes: true })) {
+      if (entry.name.startsWith(".") || EXCLUDED_NAMES.has(entry.name)) continue;
+      const relative = dir ? `${dir}/${entry.name}` : entry.name;
+      if (entry.isFile() && isLicenseFile(entry.name)) {
+        addFile(relative);
+      } else if (entry.isDirectory() && LICENSE_DIRS.test(entry.name)) {
+        walk(rootDir, relative, addFile);
+      }
+    }
+  }
+
+  // Third-party files with no licence beside them, in a parent folder below the
+  // root, or in their own header comment.
+  const unlicensed = [];
+  const all = Array.from(files);
+  for (const file of all) {
+    if (!VENDORED.test(file) || isLicenseFile(file)) continue;
+    const stem = path.posix.basename(file).replace(/(?:\.min)?\.(?:m?js|css)$/i, "").toLowerCase();
+    let covered = false;
+    for (let dir = path.posix.dirname(file); dir !== "." && !covered; dir = path.posix.dirname(dir)) {
+      covered = all.some((other) => {
+        if (path.posix.dirname(other) !== dir || !isLicenseFile(other)) return false;
+        const base = path.posix.basename(other).toLowerCase();
+        // a folder-wide LICENSE, or one named after this file (qrcode.LICENSE)
+        return LICENSE_STEM.test(base) || base.startsWith(stem) || dir !== path.posix.dirname(file);
+      });
+    }
+    if (!covered) {
+      const head = fs.readFileSync(path.join(rootDir, file)).subarray(0, 4096).toString("utf8");
+      if (!HEADER_LICENSE.test(head)) unlicensed.push(file);
+    }
+  }
+
+  const licenses = all.filter((file) => isLicenseFile(file) || file.split("/").some((part) => LICENSE_DIRS.test(part)));
+  return { files: all.sort(), missing, licenses: licenses.sort(), unlicensed };
+}
+
+/**
+ * Licence files that live outside the package folder: the project's own
+ * LICENSE/NOTICE when the package is a build output (`packageDir`), and those
+ * of npm `dependencies` a build bundles. Returns ZIP entries to add.
+ *
+ * @param {{projectRoot?: string, packageRoot: string, bundled?: boolean, have: string[]}} options
+ */
+export function externalLicenses({ projectRoot, packageRoot, bundled = false, have = [] }) {
+  const entries = [];
+  if (!projectRoot) return entries;
+  const taken = new Set(have.map((name) => name.toLowerCase()));
+  const topLevel = (dir) => (fs.existsSync(dir)
+    ? fs.readdirSync(dir, { withFileTypes: true }).filter((entry) => entry.isFile() && isLicenseFile(entry.name)).map((entry) => entry.name).sort()
+    : []);
+
+  // Find the project's own package.json / LICENSE: projectRoot or a parent,
+  // stopping at the repository root.
+  let base = path.resolve(projectRoot);
+  for (let dir = base; ; dir = path.dirname(dir)) {
+    if (fs.existsSync(path.join(dir, "package.json")) || topLevel(dir).length) {
+      base = dir;
+      break;
+    }
+    if (fs.existsSync(path.join(dir, ".git")) || path.dirname(dir) === dir) break;
+  }
+
+  if (path.resolve(base) !== path.resolve(packageRoot)) {
+    for (const name of topLevel(base)) {
+      if (taken.has(name.toLowerCase())) continue;
+      entries.push({ name, source: path.join(base, name) });
+      taken.add(name.toLowerCase());
+    }
+  }
+
+  if (!bundled) return entries;
+  let dependencies = {};
+  try {
+    dependencies = JSON.parse(fs.readFileSync(path.join(base, "package.json"), "utf8")).dependencies || {};
+  } catch {
+    return entries;
+  }
+  for (const dependency of Object.keys(dependencies).sort()) {
+    const flat = dependency.replace(/^@/, "").replace(/\//g, "-").toLowerCase();
+    // already shipped by the project (vendor/qrcode.LICENSE for "qrcode")
+    if (have.some((name) => isLicenseFile(name) && path.posix.basename(name).toLowerCase().startsWith(flat))) continue;
+    const dir = path.join(base, "node_modules", dependency);
+    for (const name of topLevel(dir)) {
+      const target = `licenses/${flat}/${name}`;
+      if (taken.has(target.toLowerCase())) continue;
+      entries.push({ name: target, source: path.join(dir, name) });
+      taken.add(target.toLowerCase());
+    }
+  }
+  return entries;
 }
 
 function walk(rootDir, relative, visit) {
@@ -306,7 +431,7 @@ function safeBaseName(name) {
  * Package an extension directory into a ZIP. The source manifest is never
  * modified; `version` is written into the packaged copy only.
  */
-export function packageExtension(rootDir, { version, outputDir, zipName, include, exclude } = {}) {
+export function packageExtension(rootDir, { version, outputDir, zipName, include, exclude, projectRoot, bundled } = {}) {
   const manifestPath = path.join(rootDir, "manifest.json");
   if (!fs.existsSync(manifestPath)) {
     throw new Error(`no manifest.json in ${rootDir}`);
@@ -314,19 +439,27 @@ export function packageExtension(rootDir, { version, outputDir, zipName, include
   const manifestText = fs.readFileSync(manifestPath, "utf8");
   const manifest = JSON.parse(manifestText);
   const finalVersion = version || manifest.version;
-  const { files, missing } = collectFiles(rootDir, manifest, { include, exclude });
+  const collected = collectFiles(rootDir, manifest, { include, exclude });
+  const external = externalLicenses({ projectRoot, packageRoot: rootDir, bundled, have: collected.files });
 
-  const entries = files.map((file) => ({
+  const entries = collected.files.map((file) => ({
     name: file,
     data:
       file === "manifest.json"
         ? Buffer.from(setManifestVersionText(manifestText, finalVersion), "utf8")
         : fs.readFileSync(path.join(rootDir, file)),
   }));
+  for (const entry of external) entries.push({ name: entry.name, data: fs.readFileSync(entry.source) });
+  entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  const files = entries.map((entry) => entry.name);
+  const licenses = [...collected.licenses, ...external.map((entry) => entry.name)].sort();
   const zip = createZip(entries);
   const base = safeBaseName(zipName || displayName(rootDir, manifest) || path.basename(rootDir));
   fs.mkdirSync(outputDir, { recursive: true });
   const zipPath = path.join(outputDir, `${base}-v${finalVersion}.zip`);
   fs.writeFileSync(zipPath, zip);
-  return { zipPath, files, missing, size: zip.length, version: finalVersion };
+  return {
+    zipPath, files, missing: collected.missing, licenses, unlicensed: collected.unlicensed,
+    size: zip.length, version: finalVersion,
+  };
 }

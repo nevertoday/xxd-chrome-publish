@@ -12,9 +12,13 @@ import {
   dashboardUrl, explainError,
 } from "./lib/cws.mjs";
 import { diffManifests, dashboardActions, findPermissionUsage } from "./lib/manifest-diff.mjs";
-import { packageExtension, displayName, setManifestVersionText } from "./lib/packager.mjs";
+import { packageExtension, displayName, setManifestVersionText, isLicenseFile } from "./lib/packager.mjs";
 import { planVersion, compareVersions, maxVersion } from "./lib/version.mjs";
 import { readZip } from "./lib/zip.mjs";
+import { localeInfo, listingActions, folderReader, zipReader } from "./lib/locales.mjs";
+import {
+  findForeignExtensionIds, usesSignIn, checkPublicPage, firstReleaseActions, foreignIdAction,
+} from "./lib/first-release.mjs";
 import {
   TOOL, LOCAL_CONFIG, EXTENSION_ID_RE, loadGlobalConfig, saveGlobalConfig, resolveRoot,
   loadLocalConfig, saveLocalConfig, normalizePublisherId, normalizeExtensionId,
@@ -56,7 +60,8 @@ Options
   --zip PATH              upload this ZIP instead of building one
   --skip-build            don't run the build script
   --skip-checks           don't run the check script
-  --dashboard-ready       the dashboard to-dos from preflight are done; don't stop for them
+  --dashboard-ready       the [required] to-dos are done and saved in the dashboard; don't stop
+                          for them (also records which listing languages were checked)
   --cancel-pending        withdraw a submission in review, then publish
   --upload-only           upload but don't submit
   --staged                approved revisions wait for you to release them
@@ -71,6 +76,9 @@ Credentials (first match wins)
   setup --service-account EMAIL                     gcloud impersonation, no key file
 
 Exit codes: 0 ok · 1 error · 2 blocked by a submission in review · 3 dashboard to-dos first
+
+Every publish/preflight/submit ends with three separate stages — dashboard saved, package
+uploaded, submitted for review. None of them means "live": that happens after approval.
 `;
 
 // ---------- args ----------
@@ -159,6 +167,14 @@ function describeStore(summary) {
   return `${published}${submitted}${summary.takenDown ? " · TAKEN DOWN" : ""}`;
 }
 
+function printLicenses(pkg) {
+  const shown = pkg.licenses.slice(0, 4).join(", ") + (pkg.licenses.length > 4 ? ` +${pkg.licenses.length - 4} more` : "");
+  out.row("licenses", pkg.licenses.length ? `${pkg.licenses.length}: ${shown}` : "none found — if the project or a bundled library has a licence, add it");
+  for (const file of pkg.unlicensed || []) {
+    out.row("warning", `${file} looks third-party but has no licence beside it or in its header — add its LICENSE (or "include" it)`);
+  }
+}
+
 class Stop extends Error {
   constructor(code, message, result) {
     super(message);
@@ -241,7 +257,10 @@ async function prepare(ctx, options) {
     }
     result.version = { from: manifest.version, to: manifest.version, reason: "zip" };
     result.package = { zipPath, files: zip.names(), size: fs.statSync(zipPath).size, manifest };
+    result.locales = localeInfo(manifest, zipReader(zip));
     out.row("package", `${tilde(zipPath)} (given)`);
+    const licenses = zip.names().filter((name) => isLicenseFile(name));
+    out.row("licenses", licenses.length ? licenses.join(", ") : "none in the ZIP — check the project's and third-party licences are included");
   } else {
     const localVersion = sourceManifestPath
       ? JSON.parse(fs.readFileSync(sourceManifestPath, "utf8")).version
@@ -292,6 +311,8 @@ async function prepare(ctx, options) {
       outputDir,
       include: local.include,
       exclude: local.exclude,
+      projectRoot: root,
+      bundled: Boolean(commands.build),
     });
     const fatal = pkg.missing.filter((item) => item.severity === "error");
     if (fatal.length) {
@@ -304,7 +325,23 @@ async function prepare(ctx, options) {
     const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, "manifest.json"), "utf8"));
     manifest.version = plan.version;
     result.package = { ...pkg, manifest, packageRoot, sourceManifestPath };
+    result.locales = localeInfo(manifest, folderReader(packageRoot));
     out.row("package", `${pkg.files.length} files · ${kb(pkg.size)}${options.preflightOnly ? "" : ` → ${tilde(pkg.zipPath)}`}`);
+    printLicenses(pkg);
+  }
+
+  // Languages: every _locales folder is a store listing page the API can't fill.
+  const locales = result.locales;
+  const localeErrors = locales.problems.filter((problem) => problem.severity === "error");
+  if (localeErrors.length) {
+    const list = localeErrors.map((problem) => `${problem.locale ? `${problem.locale}: ` : ""}${problem.text}`).join("\n    ");
+    throw new Error(`the locale files would be rejected:\n    ${list}\n  Nothing was uploaded.`);
+  }
+  for (const problem of locales.problems) out.row("warning", `${problem.locale}: ${problem.text}`);
+  if (locales.localized) {
+    const confirmed = local.listingLocales || [];
+    const label = locales.locales.map((entry) => `${entry.locale}${entry.isDefault ? " (default)" : ""}${confirmed.includes(entry.locale) ? " ✓" : ""}`);
+    out.row("languages", `${locales.locales.length}: ${label.join(", ")}${confirmed.length ? "   ✓ = listing checked before" : ""}`);
   }
 
   // Compare with what is live.
@@ -337,18 +374,41 @@ async function prepare(ctx, options) {
       action.usage = findPermissionUsage(usageRoot, files, action.permission);
     }
   }
+  // languages first: an empty language page is the easiest thing to miss
+  actions.unshift(...listingActions(locales, published?.locales || null, local.listingLocales || []));
+
+  // A new ID: everything configured with a dev or old ID breaks on review day.
+  const firstRelease = !store.published;
+  result.firstRelease = firstRelease;
+  const foreignIds = usageRoot ? findForeignExtensionIds(usageRoot, files.filter((file) => fs.existsSync(path.join(usageRoot, file))), extensionId) : [];
+  if (firstRelease) {
+    out.row("first", `nothing published under ${extensionId} yet — first-release checklist applies`);
+    actions.push(...firstReleaseActions({
+      extensionId,
+      signIn: usageRoot ? usesSignIn(usageRoot, files.filter((file) => fs.existsSync(path.join(usageRoot, file))), result.package.manifest) : false,
+      foreignIds,
+      homepage: await checkPublicPage(result.package.manifest.homepage_url),
+    }));
+  } else {
+    actions.push(...foreignIdAction(foreignIds));
+  }
   result.actions = actions;
   if (actions.length) {
     out.row("dashboard", `${actions.length} to-do${actions.length > 1 ? "s" : ""}:`);
     for (const action of actions) {
       out.line(`    ${action.blocking ? "[required]" : "[check]   "} ${action.title}`);
       if (action.hosts) out.line(`               hosts: ${action.hosts.join(", ")}`);
+      for (const note of action.notes || []) out.line(`               ${note}`);
+      for (const entry of action.locales || []) {
+        out.line(`               ${entry.locale.padEnd(6)} ${entry.name} — ${entry.description.slice(0, 80)}${entry.description.length > 80 ? "…" : ""}`);
+      }
+      if (action.usageLabel) out.line(`               ${action.usageLabel}`);
       for (const hit of action.usage || []) {
         out.line(`               ${hit.file}:${hit.line}  ${hit.snippet.slice(0, 110)}${hit.loose ? "  (via a wrapper)" : ""}`);
       }
       if (action.usage && !action.usage.length) out.line("               (no chrome.* call found — is the permission still needed?)");
     }
-    const tabs = [...new Set(actions.map((action) => action.tab))];
+    const tabs = [...new Set(actions.map((action) => action.tab || ""))];
     for (const tab of tabs) out.line(`    open ${dashboardUrl(publisherId, extensionId, tab)}`);
     if (store.submitted) {
       out.line(`    (compared with the published ${store.published?.versions.join(", ") || "version"}; the submission in review may already cover some of these)`);
@@ -356,6 +416,17 @@ async function prepare(ctx, options) {
   }
   result.dashboardBlocking = actions.some((action) => action.blocking);
   return result;
+}
+
+// After --dashboard-ready, remember which languages had their listing pages
+// checked, so later releases only stop for languages that are new.
+function recordListingCheck(ctx, prepared) {
+  const action = prepared.actions?.find((item) => item.listing);
+  if (!action || !prepared.dashboardConfirmed) return null;
+  const all = prepared.locales.locales.map((entry) => entry.locale);
+  const next = { ...loadLocalConfig(ctx.root), listingLocales: all };
+  prepared.listingRecorded = all;
+  return saveLocalConfig(ctx.root, next);
 }
 
 function persistVersion(prepared) {
@@ -405,12 +476,15 @@ async function cmdPublish(options) {
   if (prepared.dashboardBlocking && !options.dashboardReady) {
     throw new Stop(
       EXIT.dashboard,
-      `stopped before uploading: the store will reject this until the [required] dashboard items are done.\n` +
-        `  Fill them in, press "Save draft", then rerun with --dashboard-ready.\n` +
+      `stopped before uploading: the [required] items above come first (the store rejects, or the listing ships empty, otherwise).\n` +
+        `  Do them in the dashboard, press "Save draft", check the saved result, then rerun with --dashboard-ready.\n` +
         `  The ZIP is kept at ${tilde(prepared.package.zipPath)}; the source manifest is unchanged.`,
       prepared,
     );
   }
+  prepared.dashboardConfirmed = prepared.dashboardBlocking && options.dashboardReady;
+  const recorded = recordListingCheck(ctx, prepared);
+  if (recorded) out.row("languages", `listing check recorded for ${prepared.listingRecorded.join(", ")} in ${LOCAL_CONFIG}`);
 
   if (prepared.store.pendingReview && options.cancelPending) {
     await ctx.client.cancelSubmission().catch((error) => {
@@ -429,7 +503,7 @@ async function cmdPublish(options) {
     throw new Error(explain(ctx, error));
   }
   out.row("", `uploaded ${upload.crxVersion || prepared.version.to}`);
-  const changed = persistVersion(prepared);
+  const changed = [...persistVersion(prepared), ...(recorded ? [recorded] : [])];
   if (changed.length) out.row("version", `wrote ${prepared.version.to} to ${changed.map((file) => path.relative(ctx.root, file)).join(", ")}`);
 
   if (options.uploadOnly) {
@@ -450,6 +524,9 @@ async function submitAndFinish(ctx, options, result) {
   out.row("submit", state);
   for (const warning of published.warningInfo?.warnings || []) {
     out.line(`    warning ${warning.reason}: ${warning.description}`);
+    if (warning.reason === "INCONSISTENT_LOCALE_METADATA") {
+      out.line("            the language pages of the listing disagree — make every language describe the same features (dashboard → Store listing)");
+    }
   }
   let commit = null;
   if (options.commit && result.changed?.length) {
@@ -468,7 +545,7 @@ async function cmdSubmit(options) {
   }));
   out.row("store", describeStore(store));
   if (store.pendingReview) throw new Stop(EXIT.blocked, "a submission is already in review.", { store });
-  return submitAndFinish(ctx, options, { store, changed: [] });
+  return submitAndFinish(ctx, options, { store, changed: [], uploaded: "earlier" });
 }
 
 async function cmdStatus(options) {
@@ -582,13 +659,16 @@ async function cmdPack(options) {
     outputDir: path.resolve(options.outputDir || defaultOutputDir(config)),
     include: local.include,
     exclude: local.exclude,
+    projectRoot: root,
+    bundled: Boolean(commands.build),
   });
   for (const item of pkg.missing) out.row("warning", `${item.from} lists ${item.ref}, which doesn't exist`);
   if (pkg.missing.some((item) => item.severity === "error")) {
     throw new Error("the manifest references missing files Chrome needs to load the extension (see above)");
   }
   out.row("package", `${pkg.files.length} files · ${kb(pkg.size)} → ${tilde(pkg.zipPath)}`);
-  return { code: EXIT.ok, result: { zipPath: pkg.zipPath, files: pkg.files, size: pkg.size, version: pkg.version } };
+  printLicenses(pkg);
+  return { code: EXIT.ok, result: { zipPath: pkg.zipPath, files: pkg.files, licenses: pkg.licenses, unlicensed: pkg.unlicensed, size: pkg.size, version: pkg.version } };
 }
 
 async function cmdCancel(options) {
@@ -703,6 +783,31 @@ async function cmdDoctor(options) {
   return { code: ok ? EXIT.ok : EXIT.error, result: { checks } };
 }
 
+// Three separate facts, never one "published": dashboard data saved, package
+// uploaded, submitted for review. Even a submission is not live until approved.
+function stages(command, result, options) {
+  if (!result || !["publish", "preflight", "submit"].includes(command)) return null;
+  const required = (result.actions || []).filter((action) => action.blocking).length;
+  const dashboard = command === "submit"
+    ? { done: null, text: "not checked by submit — the dashboard is assumed fixed" }
+    : !required
+      ? { done: true, text: "nothing required this time" }
+      : result.dashboardConfirmed
+        ? { done: true, text: `${required} required item${required > 1 ? "s" : ""} — you confirmed they are saved (--dashboard-ready); the API can't read the dashboard` }
+        : { done: false, text: `NOT done — ${required} required item${required > 1 ? "s" : ""} above` };
+  const version = result.version?.to;
+  const uploaded = result.uploaded === "earlier"
+    ? { done: true, text: "uploaded earlier (the draft that was submitted)" }
+    : result.uploaded
+      ? { done: true, text: `uploaded ${version}` }
+      : { done: false, text: `not uploaded${result.package?.zipPath && command !== "preflight" ? ` (ZIP at ${tilde(result.package.zipPath)})` : ""}` };
+  const state = result.state;
+  const review = result.submitted
+    ? { done: true, text: `submitted — ${state}${state === "PENDING_REVIEW" ? ` (not live until Google approves it${options.staged ? ", then you release it" : ""})` : ""}` }
+    : { done: false, text: "not submitted" };
+  return { dashboard, uploaded, review };
+}
+
 // ---------- main ----------
 
 async function main() {
@@ -732,6 +837,15 @@ async function main() {
     result = error.result || null;
     message = error.message;
     out.line(`  => ${code === EXIT.error ? "error" : "stopped"}: ${message}`);
+  }
+  const summary = stages(options.command, result, options);
+  if (summary) {
+    out.line("  stages");
+    const mark = (stage) => (stage.done === true ? "✓" : stage.done === false ? "✗" : "?");
+    out.line(`    ${mark(summary.dashboard)} dashboard  ${summary.dashboard.text}`);
+    out.line(`    ${mark(summary.uploaded)} package    ${summary.uploaded.text}`);
+    out.line(`    ${mark(summary.review)} review     ${summary.review.text}`);
+    result.stages = summary;
   }
   if (options.json) {
     const strip = (value) => JSON.parse(JSON.stringify(value ?? null, (key, inner) => (key === "token" ? undefined : inner)));
