@@ -3,6 +3,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { readZip } from "../scripts/lib/zip.mjs";
 import {
@@ -334,3 +335,67 @@ test("REPORT block after a successful publish never says published", async () =>
   assert.match(result.stdout, /- 已提交审核：是 \(PENDING_REVIEW\)/);
 });
 
+// A source repo with a remote, like the shared client living in another project's repo.
+function sourceRepo(content) {
+  const sh = (cwd, ...args) => {
+    const run = spawnSync("git", args, { cwd, encoding: "utf8" });
+    assert.equal(run.status, 0, run.stderr);
+  };
+  const remote = tempDir("xcp-remote-");
+  sh(remote, "init", "--quiet", "--bare", "-b", "main");
+  const repo = tempDir("xcp-source-");
+  sh(repo, "init", "--quiet", "-b", "main");
+  writeTree(repo, { "clients/shared.js": content });
+  sh(repo, "add", ".");
+  sh(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "--quiet", "-m", "one");
+  sh(repo, "remote", "add", "origin", remote);
+  sh(repo, "push", "--quiet", "origin", "main");
+  // Someone else moves the source on; this checkout hasn't pulled.
+  const other = tempDir("xcp-other-");
+  sh(other, "clone", "--quiet", remote, ".");
+  return {
+    repo,
+    advance(next) {
+      writeTree(other, { "clients/shared.js": next });
+      sh(other, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "--quiet", "-am", "two");
+      sh(other, "push", "--quiet", "origin", "main");
+    },
+  };
+}
+
+test("a file copied from another repo ships only while it matches the source's current version", async () => {
+  setupItem();
+  const source = sourceRepo("export const rule = 1;\n");
+  const vendored = [{ file: "shared.js", repo: source.repo, path: "clients/shared.js", ref: "origin/main", sync: "node sync.mjs" }];
+  const dir = extension({
+    ".chrome-publish.json": { extensionId: EXT_ID, vendored },
+    "shared.js": "// copy of clients/shared.js — do not edit\nexport const rule = 1;\n",
+  });
+  const fresh = await run(["preflight"], dir);
+  assert.equal(fresh.code, 0, fresh.stdout + fresh.stderr);
+  assert.match(fresh.stdout, /copy\s+shared\.js = origin\/main/);
+
+  // The source moved on upstream; the local checkout of the source repo is behind and must not pass for current.
+  source.advance("export const rule = 2;\n");
+  const stale = await run([], dir);
+  assert.equal(stale.code, 1, stale.stdout + stale.stderr);
+  assert.equal(store.calls("upload").length, 0);
+  assert.match(stale.stdout, /older than the source: shared\.js/);
+  assert.match(stale.stdout, /refresh with: node sync\.mjs/);
+  assert.match(stale.stdout, /Nothing was uploaded/);
+
+  const allowed = await run(["preflight", "--allow-stale-copies"], dir);
+  assert.equal(allowed.code, 0, allowed.stdout + allowed.stderr);
+  assert.match(allowed.stdout, /shipped although it differs from origin\/main/);
+});
+
+test("a copy whose source isn't on this machine is reported, not blocked", async () => {
+  setupItem();
+  const dir = extension({
+    ".chrome-publish.json": { extensionId: EXT_ID, vendored: [{ file: "shared.js", repo: "/nowhere/source", path: "shared.js" }] },
+    "shared.js": "x",
+  });
+  const result = await run(["preflight"], dir);
+  assert.equal(result.code, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /can't compare with its source/);
+});

@@ -11,6 +11,7 @@
 | `not above the store's …` | `--set-version`/`--no-bump`/`--zip` version isn't higher than published or in-review | pick a higher version |
 | `the store's X is ahead of local Y` | this checkout lacks a release made elsewhere | fine to publish (it bumps from the store), but check whether source changes are missing |
 | `the manifest references files that don't exist` | build didn't run, wrong `packageDir`, or a stale path | run the build / fix the path; warnings (popup, web-accessible resources) don't block |
+| `a copied file is older than the source` | a `vendored` copy differs from its source at `ref` (fetched just now) | run the printed sync command, commit the copy, rerun; `--allow-stale-copies` only if shipping the old copy is intended |
 | `build failed` / `check failed` | the project's script exited non-zero | fix it, or `--skip-checks` if the user accepts the risk |
 | `could not download the published package` | item unpublished, private, or taken down | the permission diff is skipped — review permissions by hand |
 | "The extensions gallery cannot be scripted" | Chrome blocks *extensions* (Claude in Chrome) on Web Store pages | use native computer use or a DevTools-protocol driver instead; fill, Save draft, reload and read back. No such tool: give the user link + text |

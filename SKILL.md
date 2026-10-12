@@ -205,8 +205,10 @@ checkout doesn't cause a duplicate-version rejection); a local version already a
 used as-is, so rerunning after a stop never double-bumps.
 
 Per-project options live in `.chrome-publish.json` — `build`/`check` (a command or `false`),
-`packageDir` (package a build output folder), `include`/`exclude` globs, and `listingLocales`
-(written by the CLI). See `references/troubleshooting.md` for every error message and its fix.
+`packageDir` (package a build output folder), `include`/`exclude` globs, `vendored` (files
+copied from another repo: `{ file, repo, path, ref, sync }` — before upload each copy must end with
+the source at `ref`, fetched first; an old copy stops the run, `--allow-stale-copies` overrides), and
+`listingLocales` (written by the CLI). See `references/troubleshooting.md` for every error message and its fix.
 
 ## Things that went wrong before (and are now handled)
 

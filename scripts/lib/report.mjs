@@ -179,6 +179,7 @@ export function buildReport({ command, code, message, result, name, cmd }, lang 
   for (const file of r.package?.unlicensed || []) advice.push(t.licenseWarn(file));
   for (const problem of r.locales?.problems || []) if (problem.severity === "warning") advice.push(`[${problem.locale}] ${problem.text}`);
   for (const warning of r.warnings || []) advice.push(t.storeWarn(warning.reason));
+  for (const note of r.copyNotes || []) advice.push(note);
   if (advice.length) {
     lines.push(`${t.advice}${c}`);
     for (const item of advice) lines.push(`- ${item}`);

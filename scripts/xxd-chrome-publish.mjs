@@ -16,6 +16,7 @@ import { buildReport, reportLanguage } from "./lib/report.mjs";
 import { packageExtension, displayName, setManifestVersionText, isLicenseFile } from "./lib/packager.mjs";
 import { planVersion, compareVersions, maxVersion } from "./lib/version.mjs";
 import { readZip } from "./lib/zip.mjs";
+import { checkVendored } from "./lib/vendored.mjs";
 import { localeInfo, listingActions, folderReader, zipReader } from "./lib/locales.mjs";
 import {
   findForeignExtensionIds, usesSignIn, checkPublicPage, firstReleaseActions, foreignIdAction,
@@ -61,6 +62,8 @@ Options
   --zip PATH              upload this ZIP instead of building one
   --skip-build            don't run the build script
   --skip-checks           don't run the check script
+  --allow-stale-copies    ship files copied from another repo even when its source moved on
+                          ("vendored" in .chrome-publish.json)
   --dashboard-ready       the [required] to-dos are done and saved in the dashboard; don't stop
                           for them (also records which listing languages were checked)
   --cancel-pending        withdraw a submission in review, then publish
@@ -91,7 +94,7 @@ function parseArgs(argv) {
     "--dashboard-ready": "dashboardReady", "--cancel-pending": "cancelPending",
     "--upload-only": "uploadOnly", "--staged": "staged", "--skip-review": "skipReview",
     "--skip-build": "skipBuild", "--skip-checks": "skipChecks", "--no-bump": "noBump",
-    "--commit": "commit", "--json": "json",
+    "--commit": "commit", "--json": "json", "--allow-stale-copies": "allowStaleCopies",
   };
   const values = {
     "--extension-id": "extensionId", "--publisher-id": "publisherId", "--service-account": "serviceAccount",
@@ -283,6 +286,8 @@ async function prepare(ctx, options) {
       out.row("", `ok in ${run.seconds}s`);
     }
 
+    checkCopies(ctx, options, result);
+
     if (!fs.existsSync(path.join(packageRoot, "manifest.json"))) {
       throw new Error(`no manifest.json in ${packageRoot}${local.packageDir ? " — did the build run?" : ""}`);
     }
@@ -425,6 +430,35 @@ async function prepare(ctx, options) {
   }
   result.dashboardBlocking = actions.some((action) => action.blocking);
   return result;
+}
+
+// Copies of files from another repo ("vendored" in .chrome-publish.json) must
+// match the source's current version before anything ships.
+function checkCopies(ctx, options, result) {
+  const copies = checkVendored(ctx.root, ctx.local.vendored);
+  if (!copies.length) return;
+  result.copies = copies;
+  result.copyNotes = [];
+  for (const copy of copies) {
+    const where = `${copy.ref}${copy.commit ? ` ${copy.commit}` : ""}`;
+    if (copy.status === "ok") out.row("copy", `${copy.file} = ${where}`);
+    else if (copy.status === "unavailable") {
+      out.row("copy", `${copy.file} — can't compare: ${copy.detail}`);
+      result.copyNotes.push(`${copy.file}: can't compare with its source (${copy.detail})`);
+    } else {
+      out.row("copy", `${copy.file} — OLD: ${copy.detail}${copy.sync ? `; refresh with: ${copy.sync}` : ""}`);
+      if (options.allowStaleCopies) result.copyNotes.push(`${copy.file} shipped although it ${copy.detail} (--allow-stale-copies)`);
+    }
+    if (copy.note) {
+      out.row("", copy.note);
+      result.copyNotes.push(`${copy.file}: ${copy.note}`);
+    }
+  }
+  const stale = copies.filter((copy) => copy.status === "stale");
+  if (stale.length && !options.allowStaleCopies) {
+    const list = stale.map((copy) => `${copy.file}: ${copy.detail}${copy.sync ? ` — refresh with: ${copy.sync}` : ""}`).join("\n    ");
+    throw new Error(`${stale.length === 1 ? "a copied file is" : `${stale.length} copied files are`} older than the source: ${stale.map((copy) => copy.file).join(", ")}\n    ${list}\n  Refresh, commit and rerun (or --allow-stale-copies). Nothing was uploaded.`);
+  }
 }
 
 // After --dashboard-ready, remember which languages had their listing pages
