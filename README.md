@@ -132,6 +132,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 | `--zip 文件.zip` | 直接传这个 ZIP，不重新打包 |
 | `--commit` | 发完把新版本号提交到 git |
 | `--json` | 输出 JSON，方便程序读取 |
+| `--lang zh` / `--lang en` | 结尾报告（REPORT）的语言，以及 ZIP 文件名用哪种语言的商店名（就是谷歌上显示的名字）；默认跟系统语言 |
 
 退出码：`0` 完成 · `1` 出错 · `2` 有别的版本在审核 · `3` 要先去后台补资料
 

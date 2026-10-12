@@ -298,5 +298,39 @@ test("--json reports the three stages separately", async () => {
   const json = JSON.parse(result.stdout);
   assert.equal(json.stages.uploaded.done, true);
   assert.equal(json.stages.review.done, false);
-  assert.equal(json.stages.dashboard.done, true);
+  assert.equal(json.stages.dashboard.done, false, "a refused submission means the dashboard is missing something");
+  assert.match(json.report, /Uploaded, but the submission was refused/);
 });
+
+test("REPORT block: Chinese, three stages, every to-do with paste text, the exact next command", async () => {
+  setupItem();
+  const manifest = baseManifest({ permissions: ["storage", "identity"] });
+  const dir = extension({ "background.js": "chrome.identity.launchWebAuthFlow({ url });" }, manifest);
+  const result = await run(["preflight", "--lang", "zh"], dir);
+  const report = result.stdout.slice(result.stdout.indexOf("======== REPORT"));
+  assert.match(report, /结论：还没上传：后台有 1 项必须先做/);
+  assert.match(report, /- 后台资料已保存：否\n- 安装包已上传：否\n- 已提交审核：否/);
+  assert.match(report, /\[权限说明\] 为新增的 "identity" 权限写用途说明/);
+  assert.match(report, /chrome\.identity\.launchWebAuthFlow opens Chrome's sign-in window/);
+  assert.match(report, /\[数据用途\]/, "advice items are kept, not just required ones");
+  assert.match(report, /publish .* --dashboard-ready/);
+  assert.ok(!/发布完成/.test(report.replace("不等于“发布完成”", "")));
+});
+
+test("REPORT block: a never-listed item is handed to the first-listing workflow", async () => {
+  store.requests.length = 0;
+  delete store.items[EXT_ID];
+  const result = await run(["--lang", "zh"], extension());
+  assert.equal(result.code, 1);
+  assert.match(result.stdout, /结论：失败：商店里找不到这个插件/);
+  assert.match(result.stdout, /cx-chrome-store-submission/);
+  assert.match(result.stdout, /三个阶段（分开看，不等于“发布完成”）：都没有发生/);
+});
+
+test("REPORT block after a successful publish never says published", async () => {
+  setupItem();
+  const result = await run(["--lang", "zh"], extension());
+  assert.match(result.stdout, /结论：已上传并提交审核，状态 PENDING_REVIEW。Google 审核通过前，用户看不到新版本/);
+  assert.match(result.stdout, /- 已提交审核：是 \(PENDING_REVIEW\)/);
+});
+

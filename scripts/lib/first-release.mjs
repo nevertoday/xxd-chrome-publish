@@ -73,6 +73,7 @@ export function firstReleaseActions({ extensionId, signIn, foreignIds, homepage 
     blocking: true,
     firstRelease: true,
     title: `First release under ${extensionId}: put the new ID on every sign-in allow-list`,
+    zh: `新 ID ${extensionId} 第一次发布：把新 ID 加进所有登录白名单`,
     notes,
     usage: foreignIds.length ? foreignIds : undefined,
     usageLabel: foreignIds.length ? "other extension IDs in the code (dev/old ID?):" : undefined,
@@ -82,12 +83,14 @@ export function firstReleaseActions({ extensionId, signIn, foreignIds, homepage 
       blocking: true,
       firstRelease: true,
       title: "First release: give the reviewer a working test account in the dashboard's test instructions (log in with it yourself first)",
+      zh: "在后台的测试说明（test instructions）里给审核员一个能登录的测试账号，自己先登一遍确认能用",
     });
   }
   actions.push({
     blocking: true,
     firstRelease: true,
     title: "First release: the support page and privacy policy URL in the dashboard must open for the public, without signing in",
+    zh: "后台填的支持页面和隐私政策链接，不登录也要能打开",
     notes: homepage
       ? [`manifest homepage_url ${homepage.url} → ${homepage.ok ? `${homepage.status} ok` : homepage.status ? `HTTP ${homepage.status}${homepage.finalUrl !== homepage.url ? ` (ended at ${homepage.finalUrl})` : ""}` : `unreachable (${homepage.error})`}`]
       : ["no homepage_url in manifest.json — check the dashboard's support/website URL by hand"],
@@ -101,6 +104,7 @@ export function foreignIdAction(foreignIds) {
   return [{
     blocking: false,
     title: "The code mentions other extension IDs — fine for a companion extension; if it's this extension's dev or old ID, links and allow-lists point at the wrong item",
+    zh: `[其他扩展 ID] 代码里出现了别的扩展 ID（${foreignIds.slice(0, 3).map((hit) => `${hit.file}:${hit.line}`).join(", ")}）——配套扩展没问题；如果是本插件的开发版或旧 ID，链接和白名单就指错了`,
     usage: foreignIds,
   }];
 }

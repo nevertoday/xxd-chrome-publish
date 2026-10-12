@@ -132,6 +132,7 @@ Full steps: [references/setup.md](references/setup.md)
 | `--zip file.zip` | upload this zip instead of making one |
 | `--commit` | git-commit the new version number afterwards |
 | `--json` | machine-readable output |
+| `--lang zh` / `--lang en` | language of the closing REPORT block, and which language’s store name the ZIP is named after (the name Google shows you); defaults to the system language |
 
 Exit codes: `0` done · `1` error · `2` another version is in review · `3` fill in the dashboard first
 

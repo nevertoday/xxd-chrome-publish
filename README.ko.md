@@ -132,6 +132,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 | `--zip file.zip` | zip을 만들지 않고 이 파일을 업로드 |
 | `--commit` | 배포 후 새 버전 번호를 git에 커밋 |
 | `--json` | 프로그램이 읽기 쉬운 JSON으로 출력 |
+| `--lang zh` / `--lang en` | 마지막 REPORT 블록의 언어, 그리고 ZIP 파일 이름에 쓰는 스토어 이름의 언어(Google에 표시되는 이름). 기본값은 시스템 언어 |
 
 종료 코드: `0` 완료 · `1` 오류 · `2` 다른 버전이 심사 중 · `3` 대시보드 입력이 먼저 필요
 

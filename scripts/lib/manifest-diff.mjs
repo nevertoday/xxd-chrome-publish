@@ -106,6 +106,7 @@ export function dashboardActions(diff) {
       blocking: false,
       tab: "privacy",
       title: `Review the data-usage disclosures (${sensitive.join(", ")} usually means user data is handled; "identity" sign-in usually means "Authentication information", which also requires a privacy policy URL)`,
+      zh: `[数据用途] 到隐私页检查“数据使用”勾选：${sensitive.join(", ")} 通常意味着会处理用户数据${sensitive.some((p) => p.startsWith("identity")) ? "；用 identity 登录一般要勾“身份验证信息”，并且必须填隐私政策链接" : ""}`,
     });
   }
   for (const change of diff.changes) {
@@ -114,10 +115,49 @@ export function dashboardActions(diff) {
         blocking: false,
         tab: "listing",
         title: `The manifest ${change.field} changed — check the store listing still matches ("${String(change.from).slice(0, 60)}" → "${String(change.to).slice(0, 60)}")`,
+        zh: `[商店页] manifest 的${change.field === "name" ? "名称" : "简介"}改了，检查商店页是否还一致（“${String(change.from).slice(0, 60)}” → “${String(change.to).slice(0, 60)}”）`,
       });
     }
   }
   return actions;
+}
+
+// Ready-to-paste justifications. Reviewers want: the user-visible feature, the
+// API, and that it's used for nothing else. {calls} becomes the chrome.* calls
+// found in the code, so the text describes real behaviour.
+const DRAFTS = {
+  identity: "Used only to sign the user in to the extension's account. {calls} opens Chrome's sign-in window and returns the result to the extension. No other Google account data is read, and the permission is used for nothing else.",
+  "identity.email": "Used only to show which account the user is signed in with. {calls} reads the signed-in email address; it is not shared or used for anything else.",
+  storage: "Saves the user's settings and data locally in the browser ({calls}). Nothing is sent anywhere through this permission.",
+  unlimitedStorage: "Lets the extension keep the user's locally saved data (such as cached images or drafts) beyond the default quota. The data stays on the device.",
+  tabs: "Reads the title and URL of the tab the user is working in ({calls}) so the feature they invoked can act on that page. Browsing history is not collected.",
+  activeTab: "Gives the extension access to the current page only after the user clicks its toolbar button or menu item, to run the feature they asked for.",
+  scripting: "Injects the extension's own packaged scripts into the page the user is on when they use the feature ({calls}). No remote code is executed.",
+  contextMenus: "Adds the extension's item to the right-click menu ({calls}) so the user can run its feature on the selected page, text or image.",
+  sidePanel: "Shows the extension's interface in Chrome's side panel ({calls}).",
+  alarms: "Schedules the extension's own periodic tasks, such as reminders or background refreshes ({calls}).",
+  notifications: "Shows the user notifications about the results of actions they started ({calls}).",
+  offscreen: "Creates an offscreen document ({calls}) for work a service worker can't do, such as clipboard, audio or DOM parsing. It shows no UI and loads only packaged files.",
+  downloads: "Saves files the user chooses to download to their computer ({calls}).",
+  cookies: "Reads the cookies of the extension's own service ({calls}) to keep the user signed in. Cookies of other sites are not read.",
+  clipboardWrite: "Copies results to the clipboard when the user clicks a copy button.",
+  clipboardRead: "Reads the clipboard only when the user pastes into the extension.",
+  favicon: "Shows the favicons of the pages the user saved, using Chrome's built-in favicon service ({calls}). No requests go to third-party servers.",
+  declarativeNetRequest: "Applies the extension's packaged rules to modify network requests for the feature the user turned on ({calls}). Request contents are not read or collected.",
+  webRequest: "Observes requests on the sites the extension works on ({calls}) for the feature the user enabled. Request data is not collected or shared.",
+  history: "Reads browsing history only to show it inside the extension when the user searches it ({calls}). History is not sent anywhere.",
+  bookmarks: "Reads and creates bookmarks when the user asks the extension to ({calls}).",
+  host: "The extension needs access to {hosts} for its feature: it runs there or calls the extension's own service there when the user uses it. It does not run on other sites.",
+};
+
+export function draftJustification(permission, usage = [], hosts = []) {
+  const template = DRAFTS[permission] || "Used for the extension's {feature} feature ({calls}). It is not used for anything else.";
+  const calls = [...new Set(usage.map((hit) => /\b(?:chrome|browser)\??\.[\w.?]+/.exec(hit.snippet)?.[0]?.replace(/\?/g, "") || "").filter(Boolean))].slice(0, 3);
+  return template
+    .replace(" ({calls})", calls.length ? ` (${calls.join(", ")})` : "")
+    .replace("{calls}", calls.length ? calls.join(", ") : "The extension")
+    .replace("{hosts}", hosts.join(", "))
+    .replace("{feature}", permission);
 }
 
 // Permission -> chrome.* namespace, where they differ or there is none.
@@ -133,12 +173,15 @@ const API_NAMESPACE = {
   background: null,
   unlimitedStorage: null,
 };
+// Permissions used through a URL, not a chrome.* namespace.
+const URL_USAGE = { favicon: /_favicon\//, };
 
 /**
  * Find where packaged code uses a permission, so a justification can describe
  * real behaviour. Returns up to `limit` hits.
  */
 export function findPermissionUsage(rootDir, files, permission, limit = 6) {
+  if (URL_USAGE[permission]) return scanFiles(rootDir, files, URL_USAGE[permission], limit);
   const namespace = permission in API_NAMESPACE ? API_NAMESPACE[permission] : permission;
   if (!namespace) return [];
   const ns = namespace.replace(/\./g, "\\??\\.");
@@ -164,4 +207,18 @@ export function findPermissionUsage(rootDir, files, permission, limit = 6) {
   };
   const hits = scan(strict);
   return hits.length ? hits : scan(loose).map((hit) => ({ ...hit, loose: true }));
+}
+
+function scanFiles(rootDir, files, pattern, limit) {
+  const hits = [];
+  for (const file of files) {
+    if (!/\.(?:m?js|html?|css)$/.test(file)) continue;
+    const lines = fs.readFileSync(path.join(rootDir, file), "utf8").split("\n");
+    for (let index = 0; index < lines.length && hits.length < limit; index += 1) {
+      const match = pattern.exec(lines[index]);
+      if (match) hits.push({ file, line: index + 1, snippet: lines[index].slice(Math.max(0, match.index - 60), match.index + 100).trim() });
+    }
+    if (hits.length >= limit) break;
+  }
+  return hits;
 }

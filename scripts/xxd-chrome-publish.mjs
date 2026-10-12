@@ -11,7 +11,8 @@ import {
   createClient, waitForUpload, summarizeStatus, fetchPublishedManifest,
   dashboardUrl, explainError,
 } from "./lib/cws.mjs";
-import { diffManifests, dashboardActions, findPermissionUsage } from "./lib/manifest-diff.mjs";
+import { diffManifests, dashboardActions, findPermissionUsage, draftJustification } from "./lib/manifest-diff.mjs";
+import { buildReport, reportLanguage } from "./lib/report.mjs";
 import { packageExtension, displayName, setManifestVersionText, isLicenseFile } from "./lib/packager.mjs";
 import { planVersion, compareVersions, maxVersion } from "./lib/version.mjs";
 import { readZip } from "./lib/zip.mjs";
@@ -68,6 +69,7 @@ Options
   --skip-review           ask the store to skip review when the item is eligible
   --commit                git-commit the version bump after a successful submit
   --json                  machine-readable result on stdout
+  --lang zh|en            language of the closing REPORT block (default: from LANG)
   -h, --help
 
 Credentials (first match wins)
@@ -94,7 +96,7 @@ function parseArgs(argv) {
   const values = {
     "--extension-id": "extensionId", "--publisher-id": "publisherId", "--service-account": "serviceAccount",
     "--gcloud": "gcloud", "--output-dir": "outputDir", "--set-version": "setVersion", "--zip": "zip",
-    "--percentage": "percentage",
+    "--percentage": "percentage", "--lang": "lang",
   };
   // Older flag spellings map onto commands.
   const legacy = { "--status": "status", "--doctor": "doctor", "--dry-run": "pack", "--bind": "bind", "--setup": "setup" };
@@ -392,12 +394,19 @@ async function prepare(ctx, options) {
   } else {
     actions.push(...foreignIdAction(foreignIds));
   }
+  for (const action of actions) {
+    if (action.permission) action.draft = draftJustification(action.permission, action.usage || [], action.hosts || []);
+    action.url = dashboardUrl(publisherId, extensionId, action.tab || "");
+  }
   result.actions = actions;
+  result.name = localName;
+  result.dashboardUrl = dashboardUrl(publisherId, extensionId);
   if (actions.length) {
     out.row("dashboard", `${actions.length} to-do${actions.length > 1 ? "s" : ""}:`);
     for (const action of actions) {
       out.line(`    ${action.blocking ? "[required]" : "[check]   "} ${action.title}`);
       if (action.hosts) out.line(`               hosts: ${action.hosts.join(", ")}`);
+      if (action.draft) out.line(`               draft: ${action.draft}`);
       for (const note of action.notes || []) out.line(`               ${note}`);
       for (const entry of action.locales || []) {
         out.line(`               ${entry.locale.padEnd(6)} ${entry.name} — ${entry.description.slice(0, 80)}${entry.description.length > 80 ? "…" : ""}`);
@@ -534,7 +543,7 @@ async function submitAndFinish(ctx, options, result) {
     out.row("git", `committed ${commit} (not pushed)`);
   }
   out.line(`  => ${state === "PENDING_REVIEW" ? "submitted for review" : state.toLowerCase()}`);
-  return { code: EXIT.ok, result: { ...result, submitted: true, state, warnings: published.warningInfo?.warnings || [], commit } };
+  return { code: EXIT.ok, result: { ...result, submitted: true, staged: Boolean(options.staged), state, warnings: published.warningInfo?.warnings || [], commit } };
 }
 
 async function cmdSubmit(options) {
@@ -545,7 +554,7 @@ async function cmdSubmit(options) {
   }));
   out.row("store", describeStore(store));
   if (store.pendingReview) throw new Stop(EXIT.blocked, "a submission is already in review.", { store });
-  return submitAndFinish(ctx, options, { store, changed: [], uploaded: "earlier" });
+  return submitAndFinish(ctx, options, { store, changed: [], uploaded: "earlier", name: heading(ctx).split(" · ")[0], dashboardUrl: dashboardUrl(ctx.publisherId, ctx.extensionId) });
 }
 
 async function cmdStatus(options) {
@@ -788,10 +797,15 @@ async function cmdDoctor(options) {
 function stages(command, result, options) {
   if (!result || !["publish", "preflight", "submit"].includes(command)) return null;
   const required = (result.actions || []).filter((action) => action.blocking).length;
-  const dashboard = command === "submit"
-    ? { done: null, text: "not checked by submit — the dashboard is assumed fixed" }
-    : !required
-      ? { done: true, text: "nothing required this time" }
+  const rejected = result.uploaded && !result.submitted && result.submitted !== undefined && !options.uploadOnly;
+  const dashboard = rejected
+    ? { done: false, text: "the store refused the submission: something in the dashboard is missing" }
+    : result.blocked || (command !== "submit" && !result.actions)
+      ? { done: null, text: "not checked — a version is in review" }
+      : command === "submit"
+        ? { done: null, text: "not checked by submit — the dashboard is assumed fixed" }
+        : !required
+      ? { done: true, notNeeded: true, text: "nothing required this time" }
       : result.dashboardConfirmed
         ? { done: true, text: `${required} required item${required > 1 ? "s" : ""} — you confirmed they are saved (--dashboard-ready); the API can't read the dashboard` }
         : { done: false, text: `NOT done — ${required} required item${required > 1 ? "s" : ""} above` };
@@ -806,6 +820,27 @@ function stages(command, result, options) {
     ? { done: true, text: `submitted — ${state}${state === "PENDING_REVIEW" ? ` (not live until Google approves it${options.staged ? ", then you release it" : ""})` : ""}` }
     : { done: false, text: "not submitted" };
   return { dashboard, uploaded, review };
+}
+
+function localName(options) {
+  try {
+    const root = resolveRoot(options.dir);
+    const local = loadLocalConfig(root);
+    const packageRoot = path.resolve(root, local.packageDir || ".");
+    return displayName(packageRoot, JSON.parse(fs.readFileSync(path.join(packageRoot, "manifest.json"), "utf8"))) || path.basename(root);
+  } catch {
+    return "";
+  }
+}
+
+// The exact command to run next, so the agent doesn't have to compose one.
+function commandLine(sub, options, extra) {
+  const quote = (value) => (/^[\w@%+=:,./-]+$/.test(value) ? value : `'${value.replace(/'/g, "'\\''")}'`);
+  const parts = ["node", quote(process.argv[1]), sub];
+  parts.push(quote(resolveRoot(options.dir)));
+  if (extra) parts.push(extra);
+  if (options.lang) parts.push("--lang", options.lang);
+  return parts.join(" ");
 }
 
 // ---------- main ----------
@@ -823,6 +858,8 @@ async function main() {
     return;
   }
   out.json = Boolean(options.json);
+  // --lang also picks which listing's name the ZIP and report carry
+  if (options.lang) process.env.XXD_CHROME_PUBLISH_LANG = options.lang;
   const handlers = {
     publish: cmdPublish, preflight: cmdPublish, submit: cmdSubmit, status: cmdStatus, scan: cmdScan,
     pack: cmdPack, cancel: cmdCancel, rollout: cmdRollout, bind: cmdBind, setup: cmdSetup, doctor: cmdDoctor,
@@ -846,6 +883,17 @@ async function main() {
     out.line(`    ${mark(summary.uploaded)} package    ${summary.uploaded.text}`);
     out.line(`    ${mark(summary.review)} review     ${summary.review.text}`);
     result.stages = summary;
+  }
+  if (["publish", "preflight", "submit", "pack"].includes(options.command)) {
+    const report = buildReport({
+      command: options.command, code, message, result,
+      name: result?.name || localName(options),
+      cmd: (sub, extra = "") => commandLine(sub, options, extra),
+    }, reportLanguage(options.lang));
+    out.line("");
+    out.line(report);
+    if (result) result.report = report;
+    else if (options.json) result = { report };
   }
   if (options.json) {
     const strip = (value) => JSON.parse(JSON.stringify(value ?? null, (key, inner) => (key === "token" ? undefined : inner)));

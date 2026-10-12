@@ -132,6 +132,7 @@ L'outil vous dit exactement quoi remplir, et où. Chrome interdit aux extensions
 | `--zip fichier.zip` | envoie ce zip au lieu d'en créer un |
 | `--commit` | commit git du nouveau numéro de version à la fin |
 | `--json` | sortie lisible par un programme |
+| `--lang zh` / `--lang en` | langue du bloc REPORT final et du nom de la fiche utilisé pour nommer le ZIP (le nom affiché par Google) ; par défaut, celle du système |
 
 Codes de sortie : `0` terminé · `1` erreur · `2` une autre version est en examen · `3` remplissez d'abord le tableau de bord
 

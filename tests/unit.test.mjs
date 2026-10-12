@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { planVersion, compareVersions, bumpVersion, isValidVersion } from "../scripts/lib/version.mjs";
 import { createZip, readZip, crxToZip } from "../scripts/lib/zip.mjs";
-import { collectFiles, packageExtension, setManifestVersionText, globToRegExp, isLicenseFile } from "../scripts/lib/packager.mjs";
+import { collectFiles, packageExtension, setManifestVersionText, globToRegExp, isLicenseFile, displayName, viewerLocales } from "../scripts/lib/packager.mjs";
 import { localeInfo, listingActions, folderReader } from "../scripts/lib/locales.mjs";
 import { findForeignExtensionIds } from "../scripts/lib/first-release.mjs";
 import { diffManifests, dashboardActions, findPermissionUsage } from "../scripts/lib/manifest-diff.mjs";
@@ -159,10 +159,27 @@ test("packageExtension writes the version into the ZIP only", () => {
   const before = fs.readFileSync(path.join(dir, "manifest.json"), "utf8");
   const out = tempDir();
   const result = packageExtension(dir, { version: "1.0.1", outputDir: out });
-  assert.equal(path.basename(result.zipPath), "Test-Extension-v1.0.1.zip");
+  assert.equal(path.basename(result.zipPath), "Test Extension v1.0.1.zip");
   assert.equal(fs.readFileSync(path.join(dir, "manifest.json"), "utf8"), before);
   const zip = readZip(fs.readFileSync(result.zipPath));
   assert.equal(JSON.parse(zip.read("manifest.json")).version, "1.0.1");
+});
+
+test("the ZIP carries the store name the user sees: their language first, then default_locale", () => {
+  const dir = tempDir();
+  fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify({ manifest_version: 3, name: "__MSG_extName__", version: "2.0.0", default_locale: "en" }));
+  for (const [locale, name] of [["en", "XXD Poster - Markdown to X"], ["zh_CN", "小小东 · Poster - Markdown 写进 X"]]) {
+    fs.mkdirSync(path.join(dir, "_locales", locale), { recursive: true });
+    fs.writeFileSync(path.join(dir, "_locales", locale, "messages.json"), JSON.stringify({ extName: { message: name } }));
+  }
+  assert.deepEqual(viewerLocales({ LANG: "zh_CN.UTF-8" }), ["zh_CN", "zh"]);
+  assert.deepEqual(viewerLocales({ XXD_CHROME_PUBLISH_LANG: "zh", LANG: "en_US.UTF-8" }), ["zh_CN", "zh"]);
+  const zh = packageExtension(dir, { outputDir: tempDir(), locales: ["zh_CN", "zh"] });
+  assert.equal(path.basename(zh.zipPath), "小小东 · Poster - Markdown 写进 X v2.0.0.zip");
+  assert.equal(zh.name, "小小东 · Poster - Markdown 写进 X");
+  const fr = packageExtension(dir, { outputDir: tempDir(), locales: ["fr_FR", "fr"] });
+  assert.equal(path.basename(fr.zipPath), "XXD Poster - Markdown to X v2.0.0.zip");
+  assert.equal(displayName(dir, { name: "A/B: C", default_locale: "en" }, []), "A/B: C");
 });
 
 test("version text replacement keeps formatting", () => {

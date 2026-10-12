@@ -132,6 +132,7 @@ export function runCli(args, { store, cwd, configDir, env = {} } = {}) {
           XXD_CHROME_PUBLISH_CONFIG: config,
           CWS_CLIENT_ID: "",
           CWS_REFRESH_TOKEN: "",
+          XXD_CHROME_PUBLISH_LANG: "en",
           ...env,
         },
         maxBuffer: 10 * 1024 * 1024,

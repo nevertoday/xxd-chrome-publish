@@ -132,6 +132,7 @@ Alle Schritte: [references/setup.md](references/setup.md)
 | `--zip datei.zip` | dieses Zip hochladen, statt eins zu erstellen |
 | `--commit` | danach die neue Versionsnummer per git committen |
 | `--json` | maschinenlesbare Ausgabe |
+| `--lang zh` / `--lang en` | Sprache des abschließenden REPORT-Blocks und des Store-Namens im ZIP-Dateinamen (der Name, den Google anzeigt); Standard: Systemsprache |
 
 Exit-Codes: `0` fertig · `1` Fehler · `2` eine andere Version wird geprüft · `3` zuerst das Dashboard ausfüllen
 

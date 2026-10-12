@@ -85,5 +85,5 @@ This writes `.chrome-publish.json`. The ID is public, so committing the file is 
 |---|---|
 | Global config | `~/.config/xxd-chrome-publish/config.json` (`XXD_CHROME_PUBLISH_CONFIG` overrides). Older `~/.config/cx-chrome-publish/config.json` is read if the new one doesn't exist. |
 | Per extension | `<dir>/.chrome-publish.json` |
-| ZIPs | `~/Desktop` (or `outputDir` in the config / `--output-dir`); never inside the project |
+| ZIPs | `~/Desktop` (or `outputDir` in the config / `--output-dir`); never inside the project. Named `<store name> v<version>.zip`, where the store name is the one Google shows you: the listing in your language (`--lang`, else LANG), falling back to `default_locale`, written exactly as in `_locales` |
 | Env overrides | `CWS_PUBLISHER_ID`, `CWS_EXTENSION_ID`, `CWS_ACCESS_TOKEN`, `CWS_API_BASE`, `CWS_CRX_URL_TEMPLATE` |

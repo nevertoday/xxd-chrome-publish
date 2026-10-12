@@ -132,6 +132,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 | `--zip file.zip` | zip を作らず、このファイルをアップロード |
 | `--commit` | 公開後に新しいバージョン番号を git にコミット |
 | `--json` | プログラムで読みやすい JSON で出力 |
+| `--lang zh` / `--lang en` | 最後の REPORT ブロックの言語と、ZIP のファイル名に使うストア名の言語（Google に表示される名前）。既定はシステムの言語 |
 
 終了コード：`0` 完了 · `1` エラー · `2` 別のバージョンが審査中 · `3` 先にダッシュボードの入力が必要
 

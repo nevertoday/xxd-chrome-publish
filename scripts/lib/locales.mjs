@@ -153,6 +153,7 @@ export function listingActions(local, store, confirmed = []) {
       blocking: true,
       tab: "listing",
       listing: true,
+      added,
       locales: local.locales.filter((entry) => unconfirmed.includes(entry.locale)),
       title:
         `Check the store listing in ${unconfirmed.length === 1 ? "this language" : `these ${unconfirmed.length} languages`}: ${unconfirmed.join(", ")} — ` +

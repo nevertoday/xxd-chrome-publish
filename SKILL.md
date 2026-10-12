@@ -22,8 +22,32 @@ that dashboard work too when you have a native computer-use tool — otherwise t
 
 The CLI is `scripts/xxd-chrome-publish.mjs` in this skill's folder (Node 18+, no dependencies).
 Call it as `node <skill-dir>/scripts/xxd-chrome-publish.mjs …`, or by the `xxd-chrome-publish`
-command if `scripts/install.sh` linked it onto PATH. Talk to the user in their language; the CLI
-prints English.
+command if `scripts/install.sh` linked it onto PATH.
+
+## Every run, step by step (do exactly this)
+
+1. Run `preflight <extension-dir>`. Add `--lang zh` if the user writes Chinese, `--lang en`
+   otherwise.
+2. The output ends with a block from `======== REPORT` to `======== END REPORT ========`.
+   **Your reply to the user is that block, copied as is.** You may add one short sentence
+   before it. Do not shorten it, do not drop items (the 建议检查 / "Worth checking" items too),
+   do not merge the three stages, and never write "发布完成", "已发布" or "published".
+3. Do what the block's last line (下一步 / Next) says, and only when its condition holds:
+   - The user asked to publish and the result is "ready" → run the `publish` command it gives.
+   - `--dashboard-ready` → only after the user says the dashboard work is saved, or after you
+     did it yourself with computer use and read the saved page back (see below).
+   - `--cancel-pending` → only if the user explicitly says to withdraw the version in review.
+   - Never invent other flags. If a command fails, send its REPORT block and stop.
+4. After `publish` or `submit`, send the new REPORT block the same way.
+
+| Exit code | Meaning | You |
+|---|---|---|
+| 0 | done (preflight: ready) | send REPORT; after a preflight the user asked to publish, run the publish command |
+| 1 | error, nothing changed on the store | send REPORT, fix if it's obviously yours (e.g. a typo in a path), otherwise stop |
+| 2 | a version is in review | send REPORT, wait |
+| 3 | dashboard work first (or the store refused the submission) | send REPORT; do the dashboard items if you can, otherwise wait for the user |
+
+The rest of this file explains the checks behind the report; read it when a step is unclear.
 
 ## What the API can and cannot do
 
@@ -134,8 +158,8 @@ gets a checklist (below), because everything set up with a development or old ID
    package is uploaded; something in the dashboard is missing. Open the item and press "Submit
    for review" (or ask the user to) — the dashboard then names the missing field. Once fixed,
    run `submit <dir>`; it submits the uploaded draft without re-uploading or bumping.
-5. **Report — three separate facts, never one "done".** The CLI ends with a `stages` block; keep
-   its three lines apart in the report:
+5. **Report — three separate facts, never one "done".** The REPORT block already does this;
+   send it. If you add anything, keep the three stages apart:
    - **资料已保存 / dashboard saved** — which dashboard items were filled and saved, and whether
      you read them back (or "the user confirmed" if they did it);
    - **安装包已上传 / package uploaded** — version and ZIP path;

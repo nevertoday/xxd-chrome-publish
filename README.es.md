@@ -132,6 +132,7 @@ Pasos completos: [references/setup.md](references/setup.md)
 | `--zip archivo.zip` | sube este zip en lugar de crear uno |
 | `--commit` | hace un commit en git con la nueva versión al terminar |
 | `--json` | salida legible por programas |
+| `--lang zh` / `--lang en` | idioma del bloque REPORT final y del nombre de la ficha con que se nombra el ZIP (el que muestra Google); por defecto, el del sistema |
 
 Códigos de salida: `0` hecho · `1` error · `2` hay otra versión en revisión · `3` primero rellena el panel
 

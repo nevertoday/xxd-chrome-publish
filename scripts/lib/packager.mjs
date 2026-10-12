@@ -400,14 +400,44 @@ export function setManifestVersionText(text, version) {
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }
 
-export function displayName(rootDir, manifest) {
+/**
+ * The locales a store visitor on this machine is shown, best first: the store
+ * picks the listing whose locale matches the browser language, then falls back
+ * to default_locale. --lang (via XXD_CHROME_PUBLISH_LANG) wins over LC_ALL/LANG.
+ */
+export function viewerLocales(env = process.env) {
+  const raw = String(env.XXD_CHROME_PUBLISH_LANG || env.LC_ALL || env.LC_MESSAGES || env.LANG || "")
+    .split(/[.@:]/)[0].replace("-", "_");
+  const [language, region] = raw.split("_");
+  if (!language || language === "C" || language === "POSIX") return [];
+  const lang = language.toLowerCase();
+  const fallbackRegion = { zh: "CN", en: "US", pt: "BR", es: "419" }[lang];
+  const regions = [region?.toUpperCase(), fallbackRegion].filter(Boolean);
+  return [...new Set([...regions.map((code) => `${lang}_${code}`), lang])];
+}
+
+/**
+ * The extension's name as the Chrome Web Store shows it once submitted: the
+ * localized manifest name for the visitor's language (default_locale when that
+ * language has no listing), exactly as written.
+ */
+export function displayName(rootDir, manifest, locales = viewerLocales()) {
   const name = String(manifest.name || "").trim();
   const key = /^__MSG_([A-Za-z0-9_@]+)__$/.exec(name)?.[1];
   if (!key) return name;
-  for (const locale of [manifest.default_locale, "en", "en_US"].filter(Boolean)) {
-    const file = path.join(rootDir, "_locales", locale, "messages.json");
+  let folders = [];
+  try {
+    folders = fs.readdirSync(path.join(rootDir, "_locales"));
+  } catch {
+    return "";
+  }
+  const pick = (locale) => folders.find((folder) => folder.toLowerCase() === String(locale).toLowerCase());
+  const order = [...locales, manifest.default_locale, "en", "en_US"].filter(Boolean).map(pick).filter(Boolean);
+  for (const locale of [...new Set(order)]) {
     try {
-      const message = JSON.parse(fs.readFileSync(file, "utf8"))?.[key]?.message;
+      const messages = JSON.parse(fs.readFileSync(path.join(rootDir, "_locales", locale, "messages.json"), "utf8").replace(/^\uFEFF/, ""));
+      const hit = Object.keys(messages || {}).find((entry) => entry.toLowerCase() === key.toLowerCase());
+      const message = hit && messages[hit]?.message;
       if (message) return String(message).trim();
     } catch {
       // try next locale
@@ -416,14 +446,14 @@ export function displayName(rootDir, manifest) {
   return "";
 }
 
+/** A file name that keeps the store name as shown; only characters no file system allows are replaced. */
 function safeBaseName(name) {
   return (
     String(name || "")
       .replace(/\.zip$/i, "")
       .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^[.\-\s]+|[.\-\s]+$/g, "") || "chrome-extension"
+      .replace(/\s+/g, " ")
+      .replace(/^[.\s]+|[.\s]+$/g, "") || "chrome-extension"
   );
 }
 
@@ -431,7 +461,7 @@ function safeBaseName(name) {
  * Package an extension directory into a ZIP. The source manifest is never
  * modified; `version` is written into the packaged copy only.
  */
-export function packageExtension(rootDir, { version, outputDir, zipName, include, exclude, projectRoot, bundled } = {}) {
+export function packageExtension(rootDir, { version, outputDir, zipName, include, exclude, projectRoot, bundled, locales } = {}) {
   const manifestPath = path.join(rootDir, "manifest.json");
   if (!fs.existsSync(manifestPath)) {
     throw new Error(`no manifest.json in ${rootDir}`);
@@ -454,12 +484,14 @@ export function packageExtension(rootDir, { version, outputDir, zipName, include
   const files = entries.map((entry) => entry.name);
   const licenses = [...collected.licenses, ...external.map((entry) => entry.name)].sort();
   const zip = createZip(entries);
-  const base = safeBaseName(zipName || displayName(rootDir, manifest) || path.basename(rootDir));
+  // Named after the store title the user will see, so the file and the listing match.
+  const name = displayName(rootDir, manifest, locales) || path.basename(rootDir);
+  const base = safeBaseName(zipName || name);
   fs.mkdirSync(outputDir, { recursive: true });
-  const zipPath = path.join(outputDir, `${base}-v${finalVersion}.zip`);
+  const zipPath = path.join(outputDir, `${base} v${finalVersion}.zip`);
   fs.writeFileSync(zipPath, zip);
   return {
-    zipPath, files, missing: collected.missing, licenses, unlicensed: collected.unlicensed,
+    zipPath, name, files, missing: collected.missing, licenses, unlicensed: collected.unlicensed,
     size: zip.length, version: finalVersion,
   };
 }
