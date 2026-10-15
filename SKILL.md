@@ -66,7 +66,8 @@ user's signed-in Chrome) is not an extension and works. If one is available, fil
 upload the screenshots and press **Save draft** yourself — then reload the page and read back
 what was actually saved, field by field and language by language, before calling it done. Only
 when no such tool is available, give the user the link and the exact text to paste, and wait.
-Saving drafts is fine once the user asked to publish; submitting is what makes it public.
+Saving drafts is within a publish request; submission starts review. It becomes public only
+after approval and the applicable automatic or manual release step.
 
 ## First run on a machine
 
@@ -103,7 +104,14 @@ gets a checklist (below), because everything set up with a development or old ID
    before `--dashboard-ready`; `[check]` items are advice — mention them.
 
    **a. Every listing language — always first.** If the manifest has `default_locale` and
-   `_locales`, each locale is a language page in the dashboard's Store listing tab, and the API
+   `_locales`, prepare the corresponding submission material **before filling the dashboard**.
+   Read [references/dashboard.md](references/dashboard.md#prepare-the-language-material-first):
+   inventory every locale, reuse the supplied language drafts, and prepare any missing detailed
+   descriptions and screenshot assignments. An English name/summary alone is not a complete
+   English listing. Listing languages and translated UI languages are separate facts; don't
+   claim the UI is translated just because `_locales` has that language.
+
+   Check each locale's language page in the dashboard's Store listing tab; the API
    can't fill them: uploading a ten-language package leaves nine empty pages unless someone fills
    them. Preflight prints `languages` and a `[required] Check the store listing in …` item with
    each locale's name and summary from `messages.json`. For every listed language, open
@@ -119,6 +127,9 @@ gets a checklist (below), because everything set up with a development or old ID
    `--dashboard-ready` gets past this, the checked languages are recorded in
    `.chrome-publish.json` (`listingLocales`), so later releases only stop for new languages — a
    language the published package didn't have always stops, because its page is certainly empty.
+   That record is past confirmation, not proof the current descriptions or screenshots still
+   match: when features, membership terms or UI change, update the affected material in **all**
+   listing languages and read the saved pages back even if preflight says ready.
    Locale files that would stop Chrome loading the package (missing default-locale message,
    no `default_locale`) fail preflight outright; long or missing translations only warn.
 
@@ -137,7 +148,8 @@ gets a checklist (below), because everything set up with a development or old ID
    for licence files any more.
 
    **d. First release under a new ID** (nothing ever published under it). Preflight adds:
-   - put the new ID on every allow-list: `chrome-extension://<ID>` in backend CORS / allowed
+   - if the extension signs in, check the ID-dependent configuration it actually uses:
+     `chrome-extension://<ID>` in backend CORS / allowed
      origins, `https://<ID>.chromiumapp.org/` as OAuth redirect URI when it signs in with
      `launchWebAuthFlow`, and whatever login or membership server whitelists extension IDs —
      other extension IDs found in the code are listed (usually the dev ID);
@@ -145,7 +157,11 @@ gets a checklist (below), because everything set up with a development or old ID
      instructions — log in with it yourself first;
    - the support page and privacy policy URL open publicly without signing in (preflight
      fetches `homepage_url`; check the dashboard's URLs the same way).
-   Verify each one, not just ask about it, then continue with `--dashboard-ready`.
+   A signed-in developer dashboard is not a reviewer account. Use an account that remains
+   usable throughout review; don't rely on an expiring short trial. Keep its password out of
+   reports and generated listing documents. Verify the applicable checks with available access;
+   if backend access or reviewer credentials are missing, finish the independent dashboard work
+   and report exactly what is unverified before continuing with `--dashboard-ready`.
 
    On updates, other extension IDs in the code show up as a `[check]` — fine for a companion
    extension, wrong if it's this extension's old or dev ID.

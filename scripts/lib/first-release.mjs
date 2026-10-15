@@ -60,31 +60,34 @@ export async function checkPublicPage(url, timeoutMs = 10000) {
 
 /**
  * Dashboard and outside-world to-dos for an item that has never been published.
- * All blocking: a first review that can't sign in, or a support page that
- * 404s, is a rejection.
+ * Login checks apply only when sign-in is detected. Other extension IDs can
+ * still be worth checking in an extension with no sign-in.
  */
 export function firstReleaseActions({ extensionId, signIn, foreignIds, homepage }) {
-  const notes = [
-    `chrome-extension://${extensionId}  (backend CORS / allowed origins)`,
-    ...(signIn ? [`https://${extensionId}.chromiumapp.org/  (OAuth redirect URI for launchWebAuthFlow)`] : []),
-    "the OAuth client / login server / membership backend that whitelists extension IDs",
-  ];
-  const actions = [{
-    blocking: true,
-    firstRelease: true,
-    title: `First release under ${extensionId}: put the new ID on every sign-in allow-list`,
-    zh: `新 ID ${extensionId} 第一次发布：把新 ID 加进所有登录白名单`,
-    notes,
-    usage: foreignIds.length ? foreignIds : undefined,
-    usageLabel: foreignIds.length ? "other extension IDs in the code (dev/old ID?):" : undefined,
-  }];
+  const actions = [];
   if (signIn) {
+    const notes = [
+      `chrome-extension://${extensionId}  (backend CORS / allowed origins, if used)`,
+      `https://${extensionId}.chromiumapp.org/  (OAuth redirect URI, if launchWebAuthFlow is used)`,
+      "the OAuth client / login server / membership backend that whitelists extension IDs, if used",
+    ];
+    actions.push({
+      blocking: true,
+      firstRelease: true,
+      title: `First release under ${extensionId}: put the new ID on every sign-in allow-list`,
+      zh: `新 ID ${extensionId} 第一次发布：把新 ID 加进所有登录白名单`,
+      notes,
+      usage: foreignIds.length ? foreignIds : undefined,
+      usageLabel: foreignIds.length ? "other extension IDs in the code (dev/old ID?):" : undefined,
+    });
     actions.push({
       blocking: true,
       firstRelease: true,
       title: "First release: give the reviewer a working test account in the dashboard's test instructions (log in with it yourself first)",
       zh: "在后台的测试说明（test instructions）里给审核员一个能登录的测试账号，自己先登一遍确认能用",
     });
+  } else {
+    actions.push(...foreignIdAction(foreignIds));
   }
   actions.push({
     blocking: true,

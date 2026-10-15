@@ -62,8 +62,37 @@ namespace. Broad hosts (`<all_urls>`, `*://*/*`) trigger an in-depth review — 
 
 ## Store listing tab (`edit/listing`)
 
-Description, category, screenshots, promo images — once per language. Every folder in the
-package's `_locales` becomes a language in the selector at the top of this tab:
+Check the language selector against the package's `_locales`. Detailed descriptions and local
+screenshots are language-specific; the dashboard also has shared/global assets and fields.
+Do not mistake an empty local screenshot area for a missing screenshot when a global set applies.
+
+### Prepare the language material first
+
+Use the user's existing asset folder and language drafts rather than creating a competing set.
+For each locale from `default_locale` / `_locales`, prepare a paste-ready description in that
+language and identify the actual screenshot files to upload. A small inventory is enough:
+
+| Locale / dashboard language | Name + summary source | Detailed description file | Screenshots, in order | Saved and read back |
+|---|---|---|---|---|
+| `zh_CN` / 中文（中国） | `_locales/zh_CN/messages.json` | existing Chinese draft | local files 01–05 | pending |
+| `en` / English | `_locales/en/messages.json` | existing English draft | shared global files 01–05, if UI is the same | pending |
+
+Adapt the rows and file paths to the project; do not leave example filenames or placeholders in
+the delivered material. Match underscore locale codes to the dashboard's displayed language
+(for example `zh_CN` can appear as `zh-CN`). Confirm the selector rather than clicking by position.
+
+Translate from one feature description so languages agree on functionality, free limits, trials,
+membership and privacy. Check whether the UI itself changes with locale: translated store text
+does not establish translated UI. If the UI is only Chinese, say so in other-language listings
+and reuse the same truthful screenshots. If the UI is translated, prepare corresponding UI
+captures. Do not alter the extension's supported languages just to avoid preparing listing text.
+
+Finish with a saved-page check for every language, including which global or local screenshots
+actually apply. Recheck affected languages after feature/UI changes even when `listingLocales`
+already records an earlier confirmation. Missing optional video or verified-site fields are
+not automatically blockers; follow the dashboard's actual required-field messages.
+
+### Fill and verify each language
 
 | Per language | Comes from | What to check |
 |---|---|---|
@@ -84,13 +113,17 @@ When the manifest `name`/`description` change, check the listing still matches.
 The first-listing workflow (`cx-chrome-store-submission`) prepares the material and the item is
 created in the dashboard. Before the first version is submitted under the new ID:
 
-- **Allow-lists.** `chrome-extension://<ID>` in backend CORS / allowed origins;
+- **Allow-lists, if sign-in uses them.** Check the project's actual ID-dependent configuration:
+  `chrome-extension://<ID>` in backend CORS / allowed origins;
   `https://<ID>.chromiumapp.org/` in the OAuth client's redirect URIs (`launchWebAuthFlow`);
   any membership or login server that whitelists extension IDs. Preflight lists other extension
   IDs in the code — usually the unpacked dev ID these were set up with.
 - **Test instructions.** If anything sits behind sign-in, give reviewers a working account and the
   steps to reach the feature. Log in with it yourself first. A reviewer stuck at a login screen
-  rejects.
+  cannot assess the core features. Being signed into the developer dashboard does not provide
+  that account. Its access must last throughout review; do not put credentials in listing drafts
+  or completion reports. If credentials or backend access are unavailable, finish independent
+  preparation and state the concrete remaining check.
 - **Support page and privacy policy.** Both URLs must open for the public without signing in.
   `curl -sIL <url>` should end in 200, not a login redirect.
 

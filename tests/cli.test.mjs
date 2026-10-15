@@ -293,6 +293,17 @@ test("first release under a new ID: allow-lists, test account and support page c
   assert.equal(store.calls("upload").length, 1);
 });
 
+test("first release without sign-in does not require login allow-lists or a reviewer account", async () => {
+  setupItem({ status: {} });
+  store.items[EXT_ID].crx = null;
+  const result = await run(["preflight", "--json"], extension());
+  assert.equal(result.code, 3, result.stdout + result.stderr);
+  const { actions } = JSON.parse(result.stdout);
+  assert.equal(actions.some((action) => /allow-list|test account/.test(action.title)), false);
+  assert.ok(actions.some((action) => /support page and privacy/.test(action.title)));
+  assert.equal(store.calls("upload").length, 0);
+});
+
 test("--json reports the three stages separately", async () => {
   setupItem({ publishError: "Your submission does not meet the requirements to be published in the store." });
   const result = await run(["--json"], extension());
