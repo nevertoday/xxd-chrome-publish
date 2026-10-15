@@ -5,7 +5,7 @@
 | `HTTP 403 … Permission denied` (token minted fine) | the credentials' identity isn't allowed on this publisher | gcloud: service account email in the dashboard's Account → *service account* field (not Trusted testers). OAuth: token must belong to the publisher's owner/member. Check the publisher ID. |
 | `could not impersonate …` | your gcloud user lacks `roles/iam.serviceAccountTokenCreator`, or IAM Credentials API is off | see `setup.md` A |
 | `OAuth refresh failed: invalid_grant` | refresh token revoked or expired (7-day limit for consent screens in Testing) | publish the consent screen, mint a new token |
-| `HTTP 404 Item not found` | wrong extension/publisher ID, or never listed | `bind` again; never listed → first-listing workflow (`cx-chrome-store-submission` + dashboard), then `bind` the new ID |
+| `HTTP 404 Item not found` | wrong extension/publisher ID, or never listed | `bind` again; never listed → `listing` (see references/first-listing.md), create the item in the dashboard, then `bind` the new ID |
 | `publish failed … does not meet the requirements` | a dashboard field is missing (usually a permission justification, data usage, privacy policy URL) | user presses "Submit for review" in the dashboard to see which; fix; `submit` |
 | `version X is still in review` (exit 2) | a submission is pending | wait, or `--cancel-pending` if the user wants to replace it |
 | `not above the store's …` | `--set-version`/`--no-bump`/`--zip` version isn't higher than published or in-review | pick a higher version |

@@ -7,7 +7,7 @@
 
 可以当命令用，也可以装进 Claude Code / Codex，直接说“把这个插件发了”。
 
-> 只适用于已经上架的插件。第一次上架还是要去 Chrome 后台。
+> 已上架的插件直接发布更新。第一次上架：`xxd-chrome-publish listing` 先把后台要填的文字、权限说明、隐私答案和安装包按语言准备好，再去 Chrome 后台新建条目、粘贴。
 
 ![发布流程：上传前的每一步出问题都会停下](assets/diagrams/flow.zh-Hans.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | 查审核进度 | `xxd-chrome-publish status` |
 | 看哪些插件有改动还没发 | `xxd-chrome-publish scan ~/code` |
 | 检查配置对不对 | `xxd-chrome-publish doctor` |
+| 第一次上架：按语言准备后台资料和安装包 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 在 Claude Code / Codex 里直接说就行：*“把 flomo 那个插件发了”*、*“看看哪些插件可以发”*。
 
@@ -110,7 +111,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 下面这些 Google 没有开放接口，只能在 Chrome 后台操作：
 
-- 第一次上架（交给上架资料流程；拿到新 ID 后，本工具会先查登录白名单、审核测试账号、公开支持页面）
+- 在后台新建条目、粘贴上架资料（资料由 `listing` 准备；拿到新 ID 后，本工具会先查登录白名单、审核测试账号、公开支持页面）
 - 商店描述和截图（每种语言各一页）
 - 隐私页：权限说明、数据用途、隐私政策链接
 

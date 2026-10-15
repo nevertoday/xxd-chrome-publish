@@ -173,8 +173,13 @@ const API_NAMESPACE = {
   background: null,
   unlimitedStorage: null,
 };
-// Permissions used through a URL, not a chrome.* namespace.
-const URL_USAGE = { favicon: /_favicon\//, };
+// Permissions used through a URL or a web API, not a chrome.* namespace.
+const URL_USAGE = {
+  favicon: /_favicon\//,
+  clipboardWrite: /navigator\.clipboard\.write|execCommand\(\s*["']copy/,
+  clipboardRead: /navigator\.clipboard\.read|execCommand\(\s*["']paste/,
+  geolocation: /navigator\.geolocation/,
+};
 
 /**
  * Find where packaged code uses a permission, so a justification can describe

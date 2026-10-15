@@ -14,7 +14,7 @@
   html, body { margin: 0; width: 1400px; height: 560px; overflow: hidden; }
   body { position: relative; background: var(--paper); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
 
-  .copy { position: absolute; left: 80px; top: 72px; width: 440px; }
+  .copy { position: absolute; inset-inline-start: 80px; top: 72px; width: 440px; }
   .icon { display: block; width: 64px; height: 64px; }
   .name { margin: 28px 0 0; font-size: 40px; line-height: 48px; font-weight: 600; }
   .value { margin: 12px 0 0; font-size: 20px; line-height: 28px; font-weight: 400; color: var(--muted); text-wrap: balance; }
@@ -25,9 +25,9 @@
   .facts li + li { border-top: 1px solid var(--line); }
   .facts b { font-weight: 500; white-space: nowrap; }
 
-  /* hero: the whole browser screenshot, bleeding off right and bottom */
-  .hero { position: absolute; left: 600px; top: 72px; width: 900px; height: 562px; overflow: hidden;
-          border-top: 1px solid var(--line); border-left: 1px solid var(--line); border-top-left-radius: var(--radius); }
+  /* hero: the whole browser screenshot, bleeding off the far side and the bottom (mirrored with dir="rtl") */
+  .hero { position: absolute; inset-inline-start: 600px; top: 72px; width: 900px; height: 562px; overflow: hidden;
+          border-top: 1px solid var(--line); border-inline-start: 1px solid var(--line); border-start-start-radius: var(--radius); }
   .hero img { display: block; width: 900px; }
 </style>
 </head>

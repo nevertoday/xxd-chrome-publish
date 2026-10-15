@@ -176,9 +176,9 @@ export function explainError(error, { mode, serviceAccount, publisherId, extensi
   } else if (error.status === 404) {
     lines.push(
       `Item ${extensionId} was not found under publisher ${publisherId}.`,
-      "Check both IDs. The API only updates items that already exist. A first listing is not this tool's job:",
-      "hand it to the first-listing workflow (store copy, privacy answers, screenshots, creating the item in the",
-      "dashboard). Once the dashboard has given the item an ID, `bind` it and come back — the first release",
+      "Check both IDs. The API only updates items that already exist. Never listed? Run `listing` to prepare",
+      "the store copy, privacy answers and package, create the item in the dashboard and paste them. Once the",
+      "dashboard has given the item an ID, `bind` it and come back — the first release",
       "then runs a checklist (sign-in allow-lists, reviewer test account, public support page) before submitting.",
     );
   } else if (error.action === "publish" && message.includes("requirement")) {

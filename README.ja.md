@@ -7,7 +7,7 @@
 
 コマンドとしても、Claude Code / Codex のスキルとしても使えます。「拡張機能を公開して」と言うだけです。
 
-> すでに公開済みの拡張機能向けです。最初の公開は Chrome のダッシュボードで行ってください。
+> 公開済みの拡張機能は更新をそのまま公開できます。初めての公開では、`xxd-chrome-publish listing` がダッシュボードに入れる文章・権限の説明・プライバシーの回答・パッケージを掲載言語ごとに用意し、そのあと Chrome のダッシュボードでアイテムを作成して貼り付けます。
 
 ![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | 審査状況を見る | `xxd-chrome-publish status` |
 | 未公開の変更がある拡張機能を探す | `xxd-chrome-publish scan ~/code` |
 | 設定が正しいか確認 | `xxd-chrome-publish doctor` |
+| 初めての公開：言語ごとにダッシュボード資料とパッケージを用意 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 Claude Code / Codex なら頼むだけ：*「flomo の拡張機能を公開して」*、*「公開できる拡張機能はどれ？」*
 
@@ -110,7 +111,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 次のものは Google に API がないため、Chrome のダッシュボードで操作します。
 
-- 最初の公開（別のワークフローで行います。新しい ID ができたら、ここでの初回リリース前に、ログインの許可リスト・審査用テストアカウント・公開サポートページを確認します）
+- アイテムの作成と掲載資料の貼り付け（資料は `listing` が用意します。新しい ID ができたら、ここでの初回リリース前に、ログインの許可リスト・審査用テストアカウント・公開サポートページを確認します）
 - ストアの説明文とスクリーンショット（言語ごとに 1 ページ）
 - プライバシータブ：権限の説明、データの使い方、プライバシーポリシーのリンク
 

@@ -7,7 +7,7 @@
 
 명령어로 써도 되고, Claude Code / Codex 스킬로 써도 됩니다. "확장 프로그램 배포해 줘"라고 말하기만 하면 됩니다.
 
-> 이미 등록된 확장 프로그램용입니다. 처음 등록은 Chrome 대시보드에서 하세요.
+> 등록된 확장 프로그램은 업데이트를 바로 배포합니다. 처음 등록할 때는 `xxd-chrome-publish listing`이 대시보드에 넣을 문구, 권한 설명, 개인정보 답변, 패키지를 등록 언어별로 준비하고, 그다음 Chrome 대시보드에서 항목을 만들고 붙여 넣습니다.
 
 ![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | 심사 상태 확인 | `xxd-chrome-publish status` |
 | 배포 안 한 변경이 있는 확장 프로그램 찾기 | `xxd-chrome-publish scan ~/code` |
 | 설정이 맞는지 확인 | `xxd-chrome-publish doctor` |
+| 처음 등록: 언어별 대시보드 자료와 패키지 준비 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 Claude Code / Codex에서는 말만 하세요: *"flomo 확장 프로그램 배포해 줘"*, *"배포할 수 있는 확장 프로그램 뭐 있어?"*
 
@@ -110,7 +111,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 아래 항목은 Google이 API를 제공하지 않아서 Chrome 대시보드에서 해야 합니다.
 
-- 처음 등록 (별도 흐름에서 합니다. 새 ID가 생기면 여기서 첫 배포 전에 로그인 허용 목록, 심사용 테스트 계정, 공개 지원 페이지를 먼저 확인합니다)
+- 항목 만들기와 등록 자료 붙여 넣기 (자료는 `listing`이 준비합니다. 새 ID가 생기면 여기서 첫 배포 전에 로그인 허용 목록, 심사용 테스트 계정, 공개 지원 페이지를 먼저 확인합니다)
 - 스토어 설명과 스크린샷 (언어마다 한 페이지)
 - 개인정보 탭: 권한 설명, 데이터 사용, 개인정보처리방침 링크
 

@@ -335,7 +335,7 @@ test("REPORT block: a never-listed item is handed to the first-listing workflow"
   const result = await run(["--lang", "zh"], extension());
   assert.equal(result.code, 1);
   assert.match(result.stdout, /结论：失败：商店里找不到这个插件/);
-  assert.match(result.stdout, /cx-chrome-store-submission/);
+  assert.match(result.stdout, /运行 listing 准备商店文案/);
   assert.match(result.stdout, /三个阶段（分开看，不等于“发布完成”）：都没有发生/);
 });
 

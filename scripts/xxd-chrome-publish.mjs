@@ -27,9 +27,12 @@ import {
   projectCommands, runCommand, gitInfo, gitCommitManifest, findBoundProjects, defaultOutputDir,
 } from "./lib/project.mjs";
 import { VISUAL_COMMANDS, VISUAL_HELP, runVisualCommand } from "./lib/visuals/commands.mjs";
+import { storeAssetsDir } from "./lib/visuals/pages.mjs";
+import { listingFacts, listingLanguages, missingFromPackage, fillTextSkeleton, readmeText, checkListingFolder } from "./lib/listing.mjs";
+import { collectFiles } from "./lib/packager.mjs";
 
 const EXIT = { ok: 0, error: 1, blocked: 2, dashboard: 3 };
-const COMMANDS = ["publish", "preflight", "pack", "submit", "status", "scan", "cancel", "rollout", "bind", "setup", "doctor"];
+const COMMANDS = ["publish", "preflight", "pack", "submit", "status", "scan", "cancel", "rollout", "bind", "setup", "doctor", "listing"];
 
 const HELP = `${TOOL} — update an already-listed Chrome extension from the command line
 
@@ -42,6 +45,16 @@ Everyday
   status       store state of one extension
   scan [dir]   table of every bound extension under dir: local vs store, review state,
                commits since the last version bump
+
+First listing (nothing published yet)
+  listing      prepare the dashboard material: facts from the code (where each permission is
+               used, servers, remote code), the package ZIP, and a paste-ready folder in
+               dashboard order, one folder per listing language
+               --locales ja,ko,ar  also prepare these listing languages (the package needs
+               their _locales before the dashboard shows their pages); --lang zh adds a
+               Chinese reading copy when Chinese isn't a listing language
+  listing --check   check the finished folder before pasting: TODOs left, every permission
+               covered, plain-text paste blocks, summary length, upload files present
 
 Other
   pack         build + package only (no network)
@@ -95,12 +108,12 @@ function parseArgs(argv) {
     "--dashboard-ready": "dashboardReady", "--cancel-pending": "cancelPending",
     "--upload-only": "uploadOnly", "--staged": "staged", "--skip-review": "skipReview",
     "--skip-build": "skipBuild", "--skip-checks": "skipChecks", "--no-bump": "noBump",
-    "--commit": "commit", "--json": "json", "--allow-stale-copies": "allowStaleCopies",
+    "--commit": "commit", "--json": "json", "--allow-stale-copies": "allowStaleCopies", "--check": "check",
   };
   const values = {
     "--extension-id": "extensionId", "--publisher-id": "publisherId", "--service-account": "serviceAccount",
     "--gcloud": "gcloud", "--output-dir": "outputDir", "--set-version": "setVersion", "--zip": "zip",
-    "--percentage": "percentage", "--lang": "lang",
+    "--percentage": "percentage", "--lang": "lang", "--locales": "locales",
   };
   // Older flag spellings map onto commands.
   const legacy = { "--status": "status", "--doctor": "doctor", "--dry-run": "pack", "--bind": "bind", "--setup": "setup" };
@@ -715,6 +728,117 @@ async function cmdPack(options) {
   return { code: EXIT.ok, result: { zipPath: pkg.zipPath, files: pkg.files, licenses: pkg.licenses, unlicensed: pkg.unlicensed, size: pkg.size, version: pkg.version } };
 }
 
+// ---------- first listing ----------
+
+function describeFacts(facts) {
+  const code = (hit) => `\`${hit.file}:${hit.line}\``;
+  const lines = [`# Listing facts — ${facts.name} ${facts.version} (MV${facts.manifestVersion})`, "", "## Permissions", ""];
+  for (const permission of facts.permissions) {
+    lines.push(`- **${permission.name}**${permission.optional ? " (optional)" : ""}${permission.unused ? " — no use found in the packaged code" : ""}`);
+    for (const hit of permission.usage.slice(0, 4)) lines.push(`  - ${code(hit)} ${hit.snippet.slice(0, 110)}`);
+  }
+  lines.push("", "## Hosts", "", ...facts.hosts.map((host) => `- ${host.pattern} (${host.source})${host.broad ? " — broad, in-depth review" : ""}`));
+  lines.push("", "## Remote code", "", ...(facts.remoteCode.length ? facts.remoteCode.map((hit) => `- ${hit.kind}: ${code(hit)} ${hit.snippet.slice(0, 110)}`) : ["- none found"]));
+  lines.push("", "## Servers in the code", "", ...(facts.endpoints.length ? facts.endpoints.map((item) => `- ${item.origin} (${item.count}×, first ${item.first})`) : ["- none"]));
+  lines.push("", "## Signals for data use and distribution", "");
+  lines.push(`- signs in: ${facts.signIn ? "yes" : "no"}`);
+  lines.push(`- analytics / tracking SDK: ${facts.analytics.length ? facts.analytics.map(code).join(", ") : "none found"}`);
+  lines.push(`- payments / membership: ${facts.payments.length ? facts.payments.map(code).join(", ") : "none found"}`);
+  for (const api of facts.sensitiveApis) lines.push(`- ${api.name}: ${api.hits.map(code).join(", ")}`);
+  lines.push("", "## Languages", "", ...(facts.locales.length ? facts.locales.map((item) => `- ${item.locale}${item.isDefault ? " (default)" : ""}: ${item.name} — ${item.summary}`) : ["- not localized"]));
+  for (const problem of facts.localeProblems) lines.push(`- ${problem.severity}: ${problem.locale ? `${problem.locale}: ` : ""}${problem.text}`);
+  lines.push("", "## Icons", "", `- in manifest: ${facts.icons.sizes.join(", ") || "none"}${facts.icons.missing.length ? ` — missing ${facts.icons.missing.join(", ")}` : ""}`, "");
+  return lines.join("\n");
+}
+
+async function cmdListing(options) {
+  const { config } = loadGlobalConfig();
+  const root = resolveRoot(options.dir);
+  const local = loadLocalConfig(root);
+  const packageRoot = path.resolve(root, local.packageDir || ".");
+  const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, "manifest.json"), "utf8"));
+  const dir = storeAssetsDir(root, options.outputDir ? path.resolve(options.outputDir) : defaultOutputDir(config));
+  // --lang zh adds a Chinese reading copy when Chinese isn't a listing language
+  const readerLocale = { zh: "zh_CN", en: "en" }[options.lang];
+  const read = () => {
+    const { files } = collectFiles(packageRoot, manifest, { include: local.include, exclude: local.exclude });
+    const facts = listingFacts(packageRoot, manifest, files);
+    // --locales ja,ko,ar: more listing languages than the package has yet
+    const extra = String(options.locales || "").split(",").map((item) => item.trim()).filter(Boolean);
+    return { facts, languages: listingLanguages(facts, { readerLocale, extra }) };
+  };
+  const languageList = (languages) => languages.map((entry) => entry.locale + (
+    entry.isDefault ? " (default)" : !entry.listing ? " (reading copy)" : !entry.inPackage ? " (not in the package yet)" : ""
+  ) + (entry.rtl ? " rtl" : "")).join(", ");
+  const warnMissing = (languages) => {
+    for (const entry of missingFromPackage(languages)) {
+      out.row("warning", `${entry.locale}: add _locales/${entry.locale}/messages.json to the package — the dashboard has no ${entry.locale} page without it`);
+    }
+  };
+
+  if (options.check) {
+    const { facts, languages } = read();
+    const problems = checkListingFolder(dir, facts, languages);
+    out.row("folder", tilde(dir));
+    out.row("languages", languageList(languages));
+    for (const problem of problems) out.row("problem", problem);
+    warnMissing(languages);
+    out.line(problems.length
+      ? `  => NOT READY: ${problems.length} problem${problems.length > 1 ? "s" : ""}`
+      : "  => READY to paste: open fill-text.md and upload-files/");
+    return { code: problems.length ? EXIT.error : EXIT.ok, result: { dir, problems } };
+  }
+
+  // the ZIP first: a build step may change the files the facts are read from
+  const packed = await cmdPack({ ...options, outputDir: path.join(dir, "upload-files") });
+  const { facts, languages } = read();
+  const working = path.join(dir, "working");
+  fs.mkdirSync(working, { recursive: true });
+  fs.writeFileSync(path.join(working, "listing-facts.json"), `${JSON.stringify(facts, null, 2)}\n`);
+  fs.writeFileSync(path.join(working, "listing-facts.md"), describeFacts(facts));
+  const zipName = path.basename(packed.result.zipPath);
+  const written = [];
+  const kept = [];
+  const scaffold = (relative, text) => {
+    const file = path.join(dir, relative);
+    if (fs.existsSync(file)) {
+      kept.push(relative);
+      return;
+    }
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, text);
+    written.push(relative);
+  };
+  scaffold("README.md", readmeText(facts, languages, { zipName }));
+  scaffold("fill-text.md", fillTextSkeleton(facts, languages.find((entry) => entry.isDefault) || languages[0], { zipName }));
+  for (const language of languages) {
+    scaffold(`language-versions/${language.locale}/fill-text.md`, fillTextSkeleton(facts, language, { zipName }));
+  }
+
+  const signals = [
+    facts.signIn && "signs in", facts.payments.length && "payments/membership", facts.analytics.length && "analytics SDK",
+    ...facts.sensitiveApis.map((api) => api.name),
+  ].filter(Boolean);
+  out.row("folder", tilde(dir));
+  out.row("languages", languageList(languages));
+  out.row("permissions", facts.permissions.map((item) => item.name + (item.unused ? " (no use found)" : "")).join(", ") || "none");
+  if (facts.hosts.length) out.row("hosts", facts.hosts.map((host) => host.pattern + (host.broad ? " (broad)" : "")).join(", "));
+  out.row("remote code", facts.remoteCode.length
+    ? `${facts.remoteCode.length} possible: ${facts.remoteCode.map((hit) => `${hit.kind} ${hit.file}:${hit.line}`).join("; ")}`
+    : "none found");
+  out.row("servers", facts.endpoints.map((item) => item.origin).slice(0, 6).join(", ") || "none in the code");
+  out.row("signals", signals.join(", ") || "none");
+  if (facts.icons.missing.length) out.row("warning", `manifest icons missing sizes ${facts.icons.missing.join(", ")}`);
+  warnMissing(languages);
+  for (const problem of facts.localeProblems.filter((item) => item.severity === "error")) out.row("error", problem.text);
+  out.row("facts", "working/listing-facts.md — the evidence behind every answer");
+  if (written.length) out.row("scaffold", written.join(", "));
+  if (kept.length) out.row("kept", `${kept.join(", ")} (already there, not overwritten)`);
+  out.line("  => next: replace every TODO from the facts (references/first-listing.md), write full-submission.md and");
+  out.line("     privacy-policy.md per language, the privacy page and the store images, then `listing --check`");
+  return { code: EXIT.ok, result: { dir, facts, languages, zipPath: packed.result.zipPath, written, kept } };
+}
+
 async function cmdCancel(options) {
   const ctx = await context(options);
   const response = await ctx.client.cancelSubmission().catch((error) => {
@@ -908,7 +1032,7 @@ async function main() {
   if (options.lang) process.env.XXD_CHROME_PUBLISH_LANG = options.lang;
   const handlers = {
     publish: cmdPublish, preflight: cmdPublish, submit: cmdSubmit, status: cmdStatus, scan: cmdScan,
-    pack: cmdPack, cancel: cmdCancel, rollout: cmdRollout, bind: cmdBind, setup: cmdSetup, doctor: cmdDoctor,
+    pack: cmdPack, listing: cmdListing, cancel: cmdCancel, rollout: cmdRollout, bind: cmdBind, setup: cmdSetup, doctor: cmdDoctor,
   };
   let code = EXIT.ok;
   let result = null;

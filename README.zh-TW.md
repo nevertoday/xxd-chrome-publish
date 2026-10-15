@@ -7,7 +7,7 @@
 
 可以當指令用，也可以裝進 Claude Code / Codex，直接說「把這個擴充功能發布出去」。
 
-> 只適用於已經上架的擴充功能。第一次上架還是要到 Chrome 資訊主頁。
+> 已上架的擴充功能直接發布更新。第一次上架：`xxd-chrome-publish listing` 先把資訊主頁要填的文字、權限說明、隱私答案和安裝包依語言準備好，再到 Chrome 資訊主頁新增項目、貼上。
 
 ![發布流程：上傳前的每一步出問題都會停下](assets/diagrams/flow.zh-Hant.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | 查審核進度 | `xxd-chrome-publish status` |
 | 看哪些擴充功能有變更還沒發布 | `xxd-chrome-publish scan ~/code` |
 | 檢查設定對不對 | `xxd-chrome-publish doctor` |
+| 第一次上架：依語言準備資訊主頁資料和安裝包 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 在 Claude Code / Codex 裡直接說就好：*「把 flomo 那個擴充功能發布出去」*、*「看看哪些擴充功能可以發布」*。
 
@@ -110,7 +111,7 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 下面這些 Google 沒有開放 API，只能在 Chrome 資訊主頁操作：
 
-- 第一次上架（交給上架資料流程；拿到新 ID 後，本工具會先檢查登入白名單、審核測試帳號、公開支援頁面）
+- 在資訊主頁新增項目、貼上上架資料（資料由 `listing` 準備；拿到新 ID 後，本工具會先檢查登入白名單、審核測試帳號、公開支援頁面）
 - 商店說明和螢幕截圖（每種語言各一頁）
 - 隱私權分頁：權限說明、資料用途、隱私權政策連結
 

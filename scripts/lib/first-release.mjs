@@ -1,5 +1,5 @@
-// The first version submitted under a new extension ID. Creating the listing is
-// the first-listing workflow's job; by the time this tool runs, the dashboard
+// The first version submitted under a new extension ID. The listing material
+// comes from `listing` and the item is created in the dashboard; by now the dashboard
 // has issued the ID. What breaks next is everything that was set up with a
 // development or old ID: sign-in allow-lists, OAuth redirect URIs, backend CORS
 // rules, plus the reviewer who can't get past the login screen and the support

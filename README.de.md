@@ -7,7 +7,7 @@ Bauen, zippen, hochladen, zur Prüfung einreichen – und *vor dem Upload* erfah
 
 Nutzbar als Befehl oder als Skill in Claude Code / Codex: Sag einfach „Veröffentliche meine Erweiterung“.
 
-> Für Erweiterungen, die schon im Store sind. Die allererste Veröffentlichung läuft weiter über das Chrome-Dashboard.
+> Erweiterungen im Store bekommen ihre Updates direkt. Für die erste Veröffentlichung bereitet `xxd-chrome-publish listing` die Dashboard-Texte, Berechtigungsbegründungen, Datenschutzangaben und das Paket in jeder Eintragssprache vor; danach legen Sie den Eintrag im Chrome-Dashboard an und fügen ein.
 
 ![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | Den Prüfstatus ansehen | `xxd-chrome-publish status` |
 | Sehen, welche Erweiterungen unveröffentlichte Änderungen haben | `xxd-chrome-publish scan ~/code` |
 | Prüfen, ob die Einrichtung funktioniert | `xxd-chrome-publish doctor` |
+| Erste Veröffentlichung: Dashboard-Material und Paket je Sprache vorbereiten | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 In Claude Code / Codex einfach fragen: *„Veröffentliche die flomo-Erweiterung“*, *„Welche Erweiterungen kann ich veröffentlichen?“*
 
@@ -110,7 +111,7 @@ Hier wurde eine neue Website-Berechtigung gefunden. Link öffnen, in einem Satz 
 
 Dafür hat Google keine API, also bleibt es im Chrome-Dashboard:
 
-- die erste Veröffentlichung (ein eigener Ablauf; sobald die neue ID existiert, prüft die erste Version hier zuerst Login-Allowlists, ein Testkonto für die Prüfer und eine öffentliche Support-Seite)
+- den Eintrag anlegen und das Material einfügen (`listing` bereitet es vor; sobald die neue ID existiert, prüft die erste Version hier zuerst Login-Allowlists, ein Testkonto für die Prüfer und eine öffentliche Support-Seite)
 - Store-Beschreibung und Screenshots (eine Seite pro Sprache)
 - der Datenschutz-Tab: Notizen zu Berechtigungen, Datennutzung, Link zur Datenschutzerklärung
 

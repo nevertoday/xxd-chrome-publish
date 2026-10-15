@@ -12,14 +12,14 @@
   html, body { margin: 0; width: 440px; height: 280px; overflow: hidden; }
   body { position: relative; background: var(--paper); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
 
-  .copy { position: absolute; left: 32px; top: 32px; width: 188px; }
+  .copy { position: absolute; inset-inline-start: 32px; top: 32px; width: 188px; }
   .icon { display: block; width: 48px; height: 48px; }
   .name { margin: 20px 0 0; font-size: 24px; line-height: 32px; font-weight: 600; }
   .value { margin: 8px 0 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--muted); text-wrap: balance; }
 
-  /* a corner of the real UI, bleeding off right and bottom; one line separates it from the paper, no shadow */
-  .hero { position: absolute; left: 244px; top: 32px; right: 0; bottom: 0; overflow: hidden;
-          border-top: 1px solid var(--line); border-left: 1px solid var(--line); border-top-left-radius: var(--radius); }
+  /* a corner of the real UI, bleeding off the far side and the bottom (mirrored with dir="rtl"); one line separates it from the paper, no shadow */
+  .hero { position: absolute; inset-inline-start: 244px; top: 32px; inset-inline-end: 0; bottom: 0; overflow: hidden;
+          border-top: 1px solid var(--line); border-inline-start: 1px solid var(--line); border-start-start-radius: var(--radius); }
   .hero img { display: block; width: 280px; }
 </style>
 </head>

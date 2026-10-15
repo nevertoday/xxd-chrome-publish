@@ -110,8 +110,8 @@ When the manifest `name`/`description` change, check the listing still matches.
 
 ## First release under a new ID
 
-The first-listing workflow (`cx-chrome-store-submission`) prepares the material and the item is
-created in the dashboard. Before the first version is submitted under the new ID:
+`listing` prepares the material ([first-listing.md](first-listing.md)) and the item is created in
+the dashboard. Before the first version is submitted under the new ID:
 
 - **Allow-lists, if sign-in uses them.** Check the project's actual ID-dependent configuration:
   `chrome-extension://<ID>` in backend CORS / allowed origins;

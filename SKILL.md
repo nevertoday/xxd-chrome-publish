@@ -14,23 +14,27 @@ description: >
   extension, check Web Store review status, or runs /xxd-chrome-publish or /cx-chrome-publish —
   even if they only name the extension ("把 flomo 那个发了"). Also use it for 商店截图、上架截图、
   生成谷歌插件截图、做五张商店图、插件图标、商店图标、重做图标、宣传图、小宣传图、大宣传图、
-  promo tile、marquee、store screenshots, or making the store images match the UI. A first listing is not this skill's
-  job: hand it to the first-listing workflow (cx-chrome-store-submission), then come back for the
-  first release under the new ID.
+  promo tile、marquee、store screenshots, or making the store images match the UI. And for a
+  first listing: 上架资料、提交资料、提审文案、权限说明、隐私政策、数据披露、准备上架、生成提审材料、
+  Web Store listing / submission materials, or /cx-chrome-store-submission — it prepares the store
+  text, privacy answers and permission justifications from the code, in every listing language.
 ---
 
 # xxd-chrome-publish
 
-Ship updates to already-listed Chrome extensions. The CLI does everything the Web Store API
-allows; preflight finds what only the dashboard can do before anything is uploaded, and you do
-that dashboard work too when you have a native computer-use tool — otherwise the user does it.
+Ship updates to Chrome extensions, and prepare the first listing of new ones. The CLI does
+everything the Web Store API allows; preflight finds what only the dashboard can do before
+anything is uploaded, and you do that dashboard work too when you have a native computer-use
+tool — otherwise the user does it.
 
 The CLI is `scripts/xxd-chrome-publish.mjs` in this skill's folder (Node 18+, no dependencies).
 Call it as `node <skill-dir>/scripts/xxd-chrome-publish.mjs …`, or by the `xxd-chrome-publish`
 command if `scripts/install.sh` linked it onto PATH.
 
-Asked only for screenshots, an icon or promo tiles? Go to [Store images](#store-images-screenshots-icon-promo-tiles);
-the step list below is for publishing.
+Asked only for screenshots, an icon or promo tiles? Go to
+[Store images](#store-images-screenshots-icon-promo-tiles). Never listed? Go to
+[the first listing](#not-listed-yet-prepare-the-first-listing). The step list below is for
+publishing.
 
 ## Every run, step by step (do exactly this)
 
@@ -90,13 +94,35 @@ writes `.chrome-publish.json`. If the user doesn't know the ID, look for a
 `chromewebstore.google.com/detail/…` link in the repo (README, website, docs) before asking —
 but only trust links in the extension's own repo; third-party bundles embed other people's IDs.
 
-## Not listed yet? Hand off first
+## Not listed yet? Prepare the first listing
 
-This skill doesn't create listings. If the item has no ID, or the API answers 404, stop and hand
-it to the first-listing workflow — the `cx-chrome-store-submission` skill prepares store copy,
-privacy answers, screenshots and the policy page; the item itself is created in the dashboard.
-When the dashboard has issued the ID, `bind` it and come back. The first release under that ID
-gets a checklist (below), because everything set up with a development or old ID now breaks.
+The API can't create an item; the dashboard can, and it then wants store text, privacy answers
+and a justification per permission before the first submission. `listing` prepares all of it.
+Read [references/first-listing.md](references/first-listing.md) before writing any answer.
+
+1. `listing <dir>` (add `--locales ja,ko,ar` for listing languages the package doesn't have yet,
+   `--lang zh` for a Chinese reading copy). It packs the ZIP into
+   `<extension folder>-store-assets/upload-files/`, writes `working/listing-facts.md` — where each
+   permission is used (file:line), every server in the code, possible remote code, sign-in,
+   payments, analytics SDKs — and scaffolds `README.md`, `fill-text.md` and
+   `language-versions/<locale>/fill-text.md` in dashboard order. Existing files are never overwritten.
+2. Read the code behind the facts, then replace every `TODO` in every language: plain text in the
+   paste blocks, every permission and the hosts justified from their call sites, data use decided
+   from what the code sends where. Write `full-submission.md` and `privacy-policy.md` per language
+   and `upload-files/privacy-page/index.html`. Publishing the privacy page (e.g. a public GitHub
+   Pages repo) is visible to everyone — ask first. Right-to-left languages (ar, he, fa, ur) get
+   `dir="rtl"` on the privacy page and promo tiles.
+3. Make the store images (next section) into the same `upload-files/`.
+4. `listing <dir> --check` until it says READY. A language marked "not in the package yet" has no
+   dashboard page until `_locales/<locale>/messages.json` ships in the package — say so; don't add
+   locales to the source unless the user asks.
+5. The user (or you, with native computer use) creates the item in the dashboard, uploads the ZIP,
+   pastes every field in every language, saves and reads them back. Then `bind <dir>
+   --extension-id <ID>` and continue with `preflight` — the first release under the new ID gets the
+   checklist below, because everything set up with a development or old ID now breaks.
+
+Tell the user: the folder, the languages (and which still need locales in the package), what the
+facts flagged (unused permissions, broad hosts, remote code), and what is left for the dashboard.
 
 ## Publishing an update
 
@@ -253,6 +279,7 @@ version, review state, commits since `manifest.json`'s version last changed, and
 | `pack [dir]` | build + ZIP only, offline |
 | `cancel [dir]` / `rollout N [dir]` | withdraw the submission / raise rollout % |
 | `bind`, `setup`, `doctor` | configuration |
+| `listing [dir]` / `listing --check` | first-listing material (above) |
 | `shots`, `style`, `icon`, `tile`, `images`, `demo-images` | store images (above); `<command> --help` |
 
 Useful flags: `--minor`/`--major`, `--set-version X`, `--no-bump`, `--skip-build`,

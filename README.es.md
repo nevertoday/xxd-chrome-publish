@@ -7,7 +7,7 @@ Compila, empaqueta, sube y envía a revisión, y te avisa *antes de subir nada* 
 
 Úsala como comando o como skill en Claude Code / Codex: basta con decir «publica mi extensión».
 
-> Para extensiones que ya están publicadas. La primera publicación se sigue haciendo en el panel de Chrome.
+> Las extensiones publicadas reciben sus actualizaciones directamente. Para la primera publicación, `xxd-chrome-publish listing` prepara los textos del panel, las justificaciones de permisos, las respuestas de privacidad y el paquete en cada idioma de la ficha; después creas el elemento en el panel de Chrome y pegas.
 
 ![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | Ver el estado de la revisión | `xxd-chrome-publish status` |
 | Ver qué extensiones tienen cambios sin publicar | `xxd-chrome-publish scan ~/code` |
 | Comprobar que la configuración funciona | `xxd-chrome-publish doctor` |
+| Primera publicación: preparar el material del panel y el paquete por idioma | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 En Claude Code / Codex, solo pídelo: *«publica la extensión de flomo»*, *«¿qué extensiones puedo publicar?»*
 
@@ -110,7 +111,7 @@ Aquí encontró un permiso nuevo para un sitio web. Abre el enlace, escribe una 
 
 Google no ofrece API para esto, así que se queda en el panel de Chrome:
 
-- la primera publicación (es otro flujo; cuando ya existe el nuevo ID, la primera versión aquí revisa antes las listas de acceso del inicio de sesión, una cuenta de prueba para los revisores y una página de soporte pública)
+- crear el elemento y pegar el material de la ficha (lo prepara `listing`; cuando ya existe el nuevo ID, la primera versión aquí revisa antes las listas de acceso del inicio de sesión, una cuenta de prueba para los revisores y una página de soporte pública)
 - la descripción y las capturas de la tienda (una página por idioma)
 - la pestaña de privacidad: notas de permisos, uso de datos, enlace a la política de privacidad
 

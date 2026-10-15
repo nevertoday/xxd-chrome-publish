@@ -7,7 +7,7 @@ It builds, zips, uploads and submits for review — and tells you *before upload
 
 Use it as a command, or as a skill in Claude Code / Codex: just say "publish my extension".
 
-> For extensions that are already listed. The very first listing still happens in the Chrome dashboard.
+> Listed extensions get their updates published directly. For a first listing, `xxd-chrome-publish listing` prepares the dashboard text, permission justifications, privacy answers and package in every listing language; you then create the item in the Chrome dashboard and paste.
 
 ![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | Check the review status | `xxd-chrome-publish status` |
 | See which extensions have unreleased changes | `xxd-chrome-publish scan ~/code` |
 | Check that your setup works | `xxd-chrome-publish doctor` |
+| First listing: prepare the dashboard material and package per language | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 In Claude Code / Codex, just ask: *"publish the flomo extension"*, *"which of my extensions can I release?"*
 
@@ -110,7 +111,7 @@ This one found a new website permission. Open the link, write one sentence about
 
 Google has no API for these, so they stay in the Chrome dashboard:
 
-- the first listing (a separate workflow; once the new ID exists, the first release here checks sign-in allow-lists, a reviewer test account and a public support page first)
+- creating the item and pasting the listing material (`listing` prepares it; once the new ID exists, the first release here checks sign-in allow-lists, a reviewer test account and a public support page first)
 - store description and screenshots (one page per language)
 - the privacy tab: permission notes, data use, privacy policy link
 

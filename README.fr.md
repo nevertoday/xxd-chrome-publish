@@ -7,7 +7,7 @@ Elle compile, zippe, envoie et soumet à l'examen — et vous prévient *avant l
 
 Utilisez-la comme commande, ou comme skill dans Claude Code / Codex : dites simplement « publie mon extension ».
 
-> Pour les extensions déjà en ligne. La toute première publication se fait toujours dans le tableau de bord Chrome.
+> Les extensions en ligne reçoivent leurs mises à jour directement. Pour une première publication, `xxd-chrome-publish listing` prépare les textes du tableau de bord, les justifications des autorisations, les réponses de confidentialité et le paquet dans chaque langue de la fiche ; vous créez ensuite l'élément dans le tableau de bord Chrome et collez.
 
 ![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
 
@@ -64,6 +64,7 @@ xxd-chrome-publish
 | Voir où en est l'examen | `xxd-chrome-publish status` |
 | Voir quelles extensions ont des changements non publiés | `xxd-chrome-publish scan ~/code` |
 | Vérifier que la configuration marche | `xxd-chrome-publish doctor` |
+| Première publication : préparer le contenu du tableau de bord et le paquet par langue | `xxd-chrome-publish listing . --locales ja,ko,ar` |
 
 Dans Claude Code / Codex, demandez simplement : *« publie l'extension flomo »*, *« quelles extensions puis-je publier ? »*
 
@@ -110,7 +111,7 @@ Ici, elle a trouvé une nouvelle autorisation pour un site. Ouvrez le lien, écr
 
 Google ne propose pas d'API pour ceci, donc ça reste dans le tableau de bord Chrome :
 
-- la première publication (c'est un autre processus ; une fois le nouvel ID créé, la première version ici vérifie d'abord les listes d'autorisation de connexion, un compte de test pour les examinateurs et une page d'assistance publique)
+- créer l'élément et coller le contenu de la fiche (préparé par `listing` ; une fois le nouvel ID créé, la première version ici vérifie d'abord les listes d'autorisation de connexion, un compte de test pour les examinateurs et une page d'assistance publique)
 - la description et les captures d'écran du store (une page par langue)
 - l'onglet confidentialité : notes d'autorisations, utilisation des données, lien vers la politique de confidentialité
 

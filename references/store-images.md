@@ -83,7 +83,9 @@ Tiles carry text, so every listing language gets its own: name and value line fr
 language's `_locales/<locale>/messages.json`, facts translated with the same features and the
 same numbers. If the UI isn't translated into that language, the hero stays the default-language
 UI — don't pretend it is. Files go to `upload-files/locales/<locale>/`; `images` says when a
-language is borrowing the default-language tile.
+language is borrowing the default-language tile. Right-to-left languages (ar, he, fa, ur): set
+`<html lang="ar" dir="rtl">` on the tile, which mirrors the layout — copy on the right, hero on
+the left — and check the result with `tile` like any other.
 
 ## 3. Icon — `icon`
 
