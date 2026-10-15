@@ -1,0 +1,47 @@
+<!doctype html>
+<!-- Marquee promo tile 1400×560 · starting point. Copy it next to tokens.css, then change the
+     copy, lang, the hero and data-scheme.
+     Left: icon, name, one line of value, three facts (features that exist in the code, no adjectives).
+     Right: the hero, chosen in brief.md — the site plus the side panel when the extension works on
+     a site; the thing it makes (image, document, cover) when it produces something, with the UI
+     pushed to a corner. Colours, font and corners only from tokens.css. -->
+<html lang="en" data-scheme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  html[data-scheme="dark"] { --paper: var(--dark-paper); --ink: var(--dark-ink); --muted: var(--dark-muted); --line: var(--dark-line); --accent: var(--dark-accent); }
+  html, body { margin: 0; width: 1400px; height: 560px; overflow: hidden; }
+  body { position: relative; background: var(--paper); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+
+  .copy { position: absolute; left: 80px; top: 72px; width: 440px; }
+  .icon { display: block; width: 64px; height: 64px; }
+  .name { margin: 28px 0 0; font-size: 40px; line-height: 48px; font-weight: 600; }
+  .value { margin: 12px 0 0; font-size: 20px; line-height: 28px; font-weight: 400; color: var(--muted); text-wrap: balance; }
+  /* facts: label column sized by the longest label (no numbers to change per language);
+     a line between rows only, none above the first or below the last */
+  .facts { margin: 36px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: max-content 1fr; column-gap: 20px; }
+  .facts li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; font-size: 16px; line-height: 24px; padding: 10px 0; }
+  .facts li + li { border-top: 1px solid var(--line); }
+  .facts b { font-weight: 500; white-space: nowrap; }
+
+  /* hero: the whole browser screenshot, bleeding off right and bottom */
+  .hero { position: absolute; left: 600px; top: 72px; width: 900px; height: 562px; overflow: hidden;
+          border-top: 1px solid var(--line); border-left: 1px solid var(--line); border-top-left-radius: var(--radius); }
+  .hero img { display: block; width: 900px; }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <img class="icon" src="icon128.png" alt="">
+    <p class="name" data-one-line>Extension name</p>
+    <p class="value">One line: what it does for you</p>
+    <ul class="facts">
+      <li><b data-one-line>Fact one</b><span>something it really does</span></li>
+      <li><b data-one-line>Fact two</b><span>something it really does</span></li>
+      <li><b data-one-line>Fact three</b><span>something it really does</span></li>
+    </ul>
+  </div>
+  <div class="hero"><img src="hero-shot.png" alt=""></div>
+</body>
+</html>

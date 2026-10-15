@@ -67,6 +67,22 @@ xxd-chrome-publish
 
 Dans Claude Code / Codex, demandez simplement : *« publie l'extension flomo »*, *« quelles extensions puis-je publier ? »*
 
+## Images de la fiche
+
+Il fait aussi les captures, l'icône et les visuels promotionnels, en un seul ensemble avec l'interface de l'extension : couleurs, polices et coins sont lus sur ses vraies pages, sans palette à part, et le sujet de chaque visuel vient de ce que l'extension fait réellement (ce qu'elle produit, ou le site avec son panneau latéral).
+
+| Vous voulez | Tapez |
+|---|---|
+| faire les captures d'après un scénario (panneaux latéraux et pop-ups replacés dans une fenêtre de navigateur) | `xxd-chrome-publish shots . --scenario shots.json` |
+| lire les couleurs, polices, coins et l'icône actuelle de l'interface | `xxd-chrome-publish style .` |
+| créer les icônes 16/32/48/128, l'icône de la fiche et une planche de contrôle | `xxd-chrome-publish icon . --svg icon.svg` |
+| rendre un visuel promotionnel et vérifier sa mise en page | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| vérifier tailles et transparence, avec un aperçu de la fiche | `xxd-chrome-publish images .` |
+
+- `--locale ja` fait les captures de la fiche japonaise ; les captures tournent hors ligne, avec des données de démonstration seulement.
+- Tout ce qui est envoyé est en PNG 24 bits sans transparence, dans `<dossier de l'extension>-store-assets/upload-files/` sur le Bureau.
+- Nécessite Google Chrome ; playwright-core s'installe tout seul au premier usage (dans `~/.cache` — le paquet reste sans dépendance).
+
 ## À quoi ressemble une vérification
 
 ```

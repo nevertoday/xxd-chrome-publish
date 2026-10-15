@@ -67,6 +67,22 @@ xxd-chrome-publish
 
 In Claude Code / Codex, just ask: *"publish the flomo extension"*, *"which of my extensions can I release?"*
 
+## Store images
+
+It also makes the screenshots, the icon and the promo tiles — as one set with the extension's UI: colours, fonts and corners are read from the extension's real pages, not picked separately, and the hero of each tile comes from what the extension actually does (the thing it makes, or the site plus its side panel).
+
+| You want to | Type |
+|---|---|
+| capture listing screenshots from a scenario (side panels and popups framed in a browser window) | `xxd-chrome-publish shots . --scenario shots.json` |
+| read the UI's colours, fonts, corners and current icon | `xxd-chrome-publish style .` |
+| make 16/32/48/128 icons, the store icon and a review sheet | `xxd-chrome-publish icon . --svg icon.svg` |
+| render a promo tile and check its layout | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| check sizes and alpha, and get a store-page preview | `xxd-chrome-publish images .` |
+
+- `--locale ja` shoots the Japanese listing; screenshots run offline with demo data only.
+- Everything to upload is 24-bit PNG without alpha, in `<extension folder>-store-assets/upload-files/` on the Desktop.
+- Needs Google Chrome; playwright-core installs itself on first use (into `~/.cache` — the package itself stays dependency-free).
+
 ## What a check looks like
 
 ```

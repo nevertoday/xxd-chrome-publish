@@ -67,6 +67,22 @@ xxd-chrome-publish
 
 Claude Code / Codex에서는 말만 하세요: *"flomo 확장 프로그램 배포해 줘"*, *"배포할 수 있는 확장 프로그램 뭐 있어?"*
 
+## 스토어 이미지
+
+스크린샷, 아이콘, 홍보 이미지도 만들 수 있고, 확장 프로그램 UI와 한 세트로 맞춥니다. 색·글꼴·모서리는 확장 프로그램의 실제 페이지에서 읽어 오며 따로 배색하지 않습니다. 홍보 이미지의 주인공은 확장 프로그램이 실제로 하는 일(결과물을 만드는 확장이면 그 결과물, 사이트에서 동작하면 '웹페이지 + 사이드 패널')에서 고릅니다.
+
+| 하고 싶은 일 | 명령 |
+|---|---|
+| 시나리오대로 스토어 스크린샷 촬영(사이드 패널·팝업은 브라우저 창 안에 넣어 촬영) | `xxd-chrome-publish shots . --scenario shots.json` |
+| UI의 색·글꼴·모서리와 현재 아이콘 읽기 | `xxd-chrome-publish style .` |
+| 16/32/48/128 아이콘, 스토어 아이콘, 확인용 시트 만들기 | `xxd-chrome-publish icon . --svg icon.svg` |
+| 홍보 이미지 렌더링 및 레이아웃 검사 | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| 크기·투명도 검사와 스토어 페이지 미리보기 | `xxd-chrome-publish images .` |
+
+- `--locale ja`로 일본어 스토어 페이지용 스크린샷을 찍습니다. 촬영은 기본적으로 오프라인, 데모 데이터만 씁니다.
+- 업로드할 이미지는 모두 투명도 없는 24비트 PNG이며 바탕화면의 `<확장 폴더>-store-assets/upload-files/`에 들어갑니다.
+- Google Chrome이 필요합니다. 처음 쓸 때 playwright-core를 자동 설치합니다(`~/.cache`에. 패키지 자체는 의존성 없음 그대로).
+
 ## 검사 결과 예시
 
 ```

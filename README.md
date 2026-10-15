@@ -67,6 +67,22 @@ xxd-chrome-publish
 
 在 Claude Code / Codex 里直接说就行：*“把 flomo 那个插件发了”*、*“看看哪些插件可以发”*。
 
+## 商店图片
+
+截图、图标、宣传图也能做，而且和插件界面是一套：颜色、字体、圆角从插件真实页面读出来，不另外配色；宣传图的主角按插件真正做的事来选（产出图片的就放产出物，作用在网站上的就放「网页 + 侧边栏」）。
+
+| 你想 | 敲 |
+|---|---|
+| 按场景截商店截图（侧边栏、弹窗会放回浏览器窗口里） | `xxd-chrome-publish shots . --scenario shots.json` |
+| 读出界面的颜色、字体、圆角和现有图标 | `xxd-chrome-publish style .` |
+| 出 16/32/48/128 图标、商店图标和检查图 | `xxd-chrome-publish icon . --svg icon.svg` |
+| 渲染宣传图并检查排版 | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| 检查尺寸、透明，并出一张商店页预览 | `xxd-chrome-publish images .` |
+
+- 加 `--locale ja` 出日语商店页的截图；截图默认断网，只用演示数据。
+- 所有上传用的图都是 24 位、不带透明的 PNG，放在桌面的 `<插件文件夹>-store-assets/upload-files/`。
+- 需要本机装有 Google Chrome；第一次用会自动装 playwright-core（装在 `~/.cache`，插件包本身仍然零依赖）。
+
 ## 检查结果长这样
 
 ```

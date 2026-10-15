@@ -67,6 +67,22 @@ xxd-chrome-publish
 
 En Claude Code / Codex, solo pídelo: *«publica la extensión de flomo»*, *«¿qué extensiones puedo publicar?»*
 
+## Imágenes de la tienda
+
+También hace las capturas, el icono y las imágenes promocionales, como un conjunto con la interfaz de la extensión: colores, fuentes y esquinas se leen de sus páginas reales, sin paleta aparte, y el protagonista de cada imagen sale de lo que la extensión hace de verdad (lo que produce, o la web con su panel lateral).
+
+| Quieres | Escribe |
+|---|---|
+| hacer capturas según un escenario (paneles laterales y ventanas emergentes dentro de una ventana del navegador) | `xxd-chrome-publish shots . --scenario shots.json` |
+| leer colores, fuentes, esquinas e icono actual de la interfaz | `xxd-chrome-publish style .` |
+| crear iconos 16/32/48/128, el icono de la tienda y una hoja de revisión | `xxd-chrome-publish icon . --svg icon.svg` |
+| renderizar una imagen promocional y revisar su maquetación | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| revisar tamaños y transparencia y ver una vista previa de la ficha | `xxd-chrome-publish images .` |
+
+- `--locale ja` hace las capturas de la ficha en japonés; las capturas van sin red y solo con datos de demostración.
+- Todo lo que se sube es PNG de 24 bits sin transparencia, en `<carpeta de la extensión>-store-assets/upload-files/` del Escritorio.
+- Necesita Google Chrome; playwright-core se instala solo la primera vez (en `~/.cache`; el paquete sigue sin dependencias).
+
 ## Así se ve una comprobación
 
 ```

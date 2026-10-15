@@ -67,6 +67,22 @@ xxd-chrome-publish
 
 在 Claude Code / Codex 裡直接說就好：*「把 flomo 那個擴充功能發布出去」*、*「看看哪些擴充功能可以發布」*。
 
+## 商店圖片
+
+截圖、圖示、宣傳圖也能做，而且和擴充功能介面是一套：顏色、字型、圓角從擴充功能的真實頁面讀出來，不另外配色；宣傳圖的主角依擴充功能真正做的事來選（產出圖片的就放產出物，作用在網站上的就放「網頁 + 側邊欄」）。
+
+| 你想 | 輸入 |
+|---|---|
+| 依情境截商店截圖（側邊欄、彈出視窗會放回瀏覽器視窗裡） | `xxd-chrome-publish shots . --scenario shots.json` |
+| 讀出介面的顏色、字型、圓角和現有圖示 | `xxd-chrome-publish style .` |
+| 產生 16/32/48/128 圖示、商店圖示和檢查圖 | `xxd-chrome-publish icon . --svg icon.svg` |
+| 算繪宣傳圖並檢查排版 | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| 檢查尺寸、透明度，並產生一張商店頁預覽 | `xxd-chrome-publish images .` |
+
+- 加 `--locale ja` 產生日文商店頁的截圖；截圖預設斷網，只用示範資料。
+- 所有要上傳的圖都是 24 位元、不含透明的 PNG，放在桌面的 `<擴充功能資料夾>-store-assets/upload-files/`。
+- 需要本機裝有 Google Chrome；第一次使用會自動安裝 playwright-core（裝在 `~/.cache`，擴充功能套件本身仍然零相依）。
+
 ## 檢查結果長這樣
 
 ```

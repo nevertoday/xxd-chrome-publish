@@ -5,11 +5,16 @@ description: >
   command line: build, check, package (catching files a naive zip misses, licence files included),
   compare with the live version, check every store-listing language, upload, submit for review,
   and do or report what the Developer Dashboard still needs. Also answers "which of my extensions
-  have unreleased changes?" across a folder.
+  have unreleased changes?" across a folder. And makes the store images: listing screenshots
+  (side panels and popups framed in a browser window, per language), the icon set and the two
+  promo tiles, with colours, fonts and corners read from the extension's own UI and the hero taken
+  from what its code does, so everything looks like one product.
   Use whenever the user wants to 发布插件、提交插件、更新插件、上传到 Chrome 商店、提交审核、
   谷歌商店更新、看哪些插件可以发、插件审核状态, publish / submit / upload / release a Chrome
   extension, check Web Store review status, or runs /xxd-chrome-publish or /cx-chrome-publish —
-  even if they only name the extension ("把 flomo 那个发了"). A first listing is not this skill's
+  even if they only name the extension ("把 flomo 那个发了"). Also use it for 商店截图、上架截图、
+  生成谷歌插件截图、做五张商店图、插件图标、商店图标、重做图标、宣传图、小宣传图、大宣传图、
+  promo tile、marquee、store screenshots, or making the store images match the UI. A first listing is not this skill's
   job: hand it to the first-listing workflow (cx-chrome-store-submission), then come back for the
   first release under the new ID.
 ---
@@ -23,6 +28,9 @@ that dashboard work too when you have a native computer-use tool — otherwise t
 The CLI is `scripts/xxd-chrome-publish.mjs` in this skill's folder (Node 18+, no dependencies).
 Call it as `node <skill-dir>/scripts/xxd-chrome-publish.mjs …`, or by the `xxd-chrome-publish`
 command if `scripts/install.sh` linked it onto PATH.
+
+Asked only for screenshots, an icon or promo tiles? Go to [Store images](#store-images-screenshots-icon-promo-tiles);
+the step list below is for publishing.
 
 ## Every run, step by step (do exactly this)
 
@@ -122,9 +130,9 @@ gets a checklist (below), because everything set up with a development or old ID
    - **screenshots**: one global set is fine while the extension's UI looks the same in every
      language; when the UI itself is translated, that language's page needs screenshots of the
      UI in that language.
-   Fill whatever is empty (translate the default description; `chrome-webstore-screenshots`
-   can make per-language screenshots), Save draft, reload, and re-check every language. Once
-   `--dashboard-ready` gets past this, the checked languages are recorded in
+   Fill whatever is empty (translate the default description; `shots --locale <locale>` makes
+   per-language screenshots, see Store images), Save draft, reload, and re-check every language.
+   Once `--dashboard-ready` gets past this, the checked languages are recorded in
    `.chrome-publish.json` (`listingLocales`), so later releases only stop for new languages — a
    language the published package didn't have always stops, because its page is certainly empty.
    That record is past confirmation, not proof the current descriptions or screenshots still
@@ -190,6 +198,41 @@ gets a checklist (below), because everything set up with a development or old ID
 Several extensions: preflight them all first, collect the dashboard work into one pass, then
 publish the ready ones.
 
+## Store images: screenshots, icon, promo tiles
+
+The dashboard wants a 128 store icon, 1280×800 screenshots, a 440×280 small tile and optionally a
+1400×560 marquee — 24-bit PNG, no alpha. These commands make them from the extension itself, into
+`<extension folder>-store-assets/` (on the Desktop unless that folder already sits next to the
+extension): `upload-files/` holds what gets uploaded, `working/visuals/` the inputs and drafts.
+They need Google Chrome; playwright-core installs itself on first use, outside the package.
+Read [references/store-images.md](references/store-images.md) before drawing anything, and
+[references/screenshots.md](references/screenshots.md) for scenario files.
+
+1. **Read the UI.** `style <dir>` → `style.json`, `tokens.css`, `ui-light.png`. Colours, font,
+   corners and the current icon's tile/glyph colours come from here and nowhere else.
+2. **Read what it does.** From manifest, main button, background, README: write
+   `working/visuals/brief.md` (does / where / hero / moment / UI style / avoid).
+3. **Screenshots.** Write a scenario (start from `assets/scenario.example.json`; side panels use
+   `"layout": {"mode": "sidepanel", …}`, signed-in state via `storage` / `localStorage`, sample
+   pictures from `demo-images DIR` — ten scenes in four shapes; load as many as the feature
+   shows), then `shots <dir> --scenario FILE --assets-dir DIR --raw-dir
+   <store-assets>/working/visuals/raw`. The network is off by default. Make all five shots; look
+   at `00-contact-sheet.png`.
+4. **Icon.** Keep, unify or redraw (rules in store-images.md), then `icon <dir> --svg icon.svg
+   --compare <sibling icons…>` (or `--png icons/icon128.png` to keep a bitmap). **Look at
+   `icon-preview.png`.** Only `--install` into the extension when the user wants the icon replaced.
+5. **Promo tiles.** Copy `assets/templates/promo-*.html` into `working/visuals/`, arrange the hero
+   from the brief, `tile FILE.html --size 440x280|1400x560 --out upload-files/…`. Fix every
+   `problem`, then open the PNG. One HTML per listing language, output in `upload-files/locales/<locale>/`.
+6. **Together.** `images <dir>` checks sizes and alpha and writes `00-visual-board.png`; look at it
+   and fix whatever doesn't look like the same product.
+
+Tell the user: the files in `upload-files/` and the board; where the style came from (system,
+paper/ink/accent, corners); whether the icon was kept, unified or redrawn and whether anything was
+written into the extension (by default nothing); the hero and why; which languages, and which of
+them reuse the default-language UI because the UI isn't translated. Nothing here uploads — the
+images go into the dashboard (step 2a of publishing).
+
 ## "Which extensions can I release?"
 
 `scan <folder>` finds every bound extension below the folder and prints local version, store
@@ -210,6 +253,7 @@ version, review state, commits since `manifest.json`'s version last changed, and
 | `pack [dir]` | build + ZIP only, offline |
 | `cancel [dir]` / `rollout N [dir]` | withdraw the submission / raise rollout % |
 | `bind`, `setup`, `doctor` | configuration |
+| `shots`, `style`, `icon`, `tile`, `images`, `demo-images` | store images (above); `<command> --help` |
 
 Useful flags: `--minor`/`--major`, `--set-version X`, `--no-bump`, `--skip-build`,
 `--skip-checks`, `--upload-only`, `--staged`, `--zip PATH`, `--json`. Exit codes: 0 ok,

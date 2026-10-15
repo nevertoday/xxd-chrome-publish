@@ -67,6 +67,22 @@ xxd-chrome-publish
 
 In Claude Code / Codex einfach fragen: *„Veröffentliche die flomo-Erweiterung“*, *„Welche Erweiterungen kann ich veröffentlichen?“*
 
+## Store-Bilder
+
+Es macht auch Screenshots, Icon und Werbebilder – als ein Satz mit der Oberfläche der Erweiterung: Farben, Schriften und Ecken werden aus ihren echten Seiten gelesen, nicht eigens gewählt, und das Hauptmotiv jedes Bildes ergibt sich aus dem, was die Erweiterung tatsächlich tut (das, was sie erzeugt, oder die Website mit ihrem Seitenbereich).
+
+| Sie wollen | Eingeben |
+|---|---|
+| Store-Screenshots nach einem Szenario aufnehmen (Seitenbereiche und Pop-ups im Browserfenster) | `xxd-chrome-publish shots . --scenario shots.json` |
+| Farben, Schriften, Ecken und das aktuelle Icon der Oberfläche auslesen | `xxd-chrome-publish style .` |
+| Icons 16/32/48/128, Store-Icon und Prüfbogen erzeugen | `xxd-chrome-publish icon . --svg icon.svg` |
+| ein Werbebild rendern und das Layout prüfen | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| Größen und Transparenz prüfen, mit Vorschau der Store-Seite | `xxd-chrome-publish images .` |
+
+- `--locale ja` nimmt die Screenshots für den japanischen Eintrag auf; Aufnahmen laufen offline und nur mit Demodaten.
+- Alles zum Hochladen ist 24-Bit-PNG ohne Transparenz, in `<Erweiterungsordner>-store-assets/upload-files/` auf dem Schreibtisch.
+- Braucht Google Chrome; playwright-core installiert sich beim ersten Mal selbst (in `~/.cache` – das Paket selbst bleibt ohne Abhängigkeiten).
+
 ## So sieht eine Prüfung aus
 
 ```

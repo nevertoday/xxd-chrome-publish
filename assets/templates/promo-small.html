@@ -1,0 +1,34 @@
+<!doctype html>
+<!-- Small promo tile 440×280 · starting point. Copy it next to tokens.css (working/visuals/),
+     then change the copy, lang, the hero image and data-scheme. Colours, font and corners
+     come only from tokens.css, which `xxd-chrome-publish style` read from the extension's UI.
+     The store shows this tile small: icon + name + one line of value + one piece of real UI. -->
+<html lang="en" data-scheme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  html[data-scheme="dark"] { --paper: var(--dark-paper); --ink: var(--dark-ink); --muted: var(--dark-muted); --line: var(--dark-line); --accent: var(--dark-accent); }
+  html, body { margin: 0; width: 440px; height: 280px; overflow: hidden; }
+  body { position: relative; background: var(--paper); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+
+  .copy { position: absolute; left: 32px; top: 32px; width: 188px; }
+  .icon { display: block; width: 48px; height: 48px; }
+  .name { margin: 20px 0 0; font-size: 24px; line-height: 32px; font-weight: 600; }
+  .value { margin: 8px 0 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--muted); text-wrap: balance; }
+
+  /* a corner of the real UI, bleeding off right and bottom; one line separates it from the paper, no shadow */
+  .hero { position: absolute; left: 244px; top: 32px; right: 0; bottom: 0; overflow: hidden;
+          border-top: 1px solid var(--line); border-left: 1px solid var(--line); border-top-left-radius: var(--radius); }
+  .hero img { display: block; width: 280px; }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <img class="icon" src="icon128.png" alt="">
+    <p class="name" data-one-line>Extension name</p>
+    <p class="value">One line: what it does for you</p>
+  </div>
+  <div class="hero"><img src="hero-ui.png" alt=""></div>
+</body>
+</html>

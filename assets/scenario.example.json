@@ -1,0 +1,21 @@
+{
+  "viewport": { "width": 1280, "height": 800 },
+  "urlPath": "/sidepanel.html",
+  "layout": { "mode": "sidepanel", "panelWidth": 400, "hostUrl": "mp.weixin.qq.com/cgi-bin/appmsg", "hostTitle": "Draft editor" },
+  "storage": { "local": { "account_session": { "token": "demo" }, "account_status": { "signedIn": true, "email": "demo@example.com" } } },
+  "localStorage": { "account-mirror": "signed-in" },
+  "ready": { "selectors": ["#app"], "delayMs": 1200 },
+  "afterLoadActions": [
+    { "type": "setInputFiles", "selector": "#fileInput", "files": ["sample-1.png", "sample-2.png", "sample-3.png"] },
+    { "type": "wait", "ms": 1500 }
+  ],
+  "beforeEachShotActions": [
+    { "type": "click", "selector": "#tab-main" },
+    { "type": "wait", "ms": 300 }
+  ],
+  "shots": [
+    { "name": "01-main-result", "actions": [], "elements": [ { "selector": "#preview", "name": "hero-result", "hide": ["#guides"] } ] },
+    { "name": "02-settings", "actions": [ { "type": "click", "selector": "#tab-settings" }, { "type": "wait", "ms": 400 } ] },
+    { "name": "03-history", "actions": [ { "type": "click", "selector": "#tab-history" }, { "type": "wait", "ms": 400 } ] }
+  ]
+}

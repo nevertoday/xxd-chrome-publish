@@ -26,6 +26,7 @@ import {
   loadLocalConfig, saveLocalConfig, normalizePublisherId, normalizeExtensionId,
   projectCommands, runCommand, gitInfo, gitCommitManifest, findBoundProjects, defaultOutputDir,
 } from "./lib/project.mjs";
+import { VISUAL_COMMANDS, VISUAL_HELP, runVisualCommand } from "./lib/visuals/commands.mjs";
 
 const EXIT = { ok: 0, error: 1, blocked: 2, dashboard: 3 };
 const COMMANDS = ["publish", "preflight", "pack", "submit", "status", "scan", "cancel", "rollout", "bind", "setup", "doctor"];
@@ -880,6 +881,17 @@ function commandLine(sub, options, extra) {
 // ---------- main ----------
 
 async function main() {
+  const argv = process.argv.slice(2);
+  if (VISUAL_COMMANDS.includes(argv[0])) {
+    // store images have their own options; see lib/visuals/commands.mjs
+    try {
+      process.exitCode = await runVisualCommand(argv[0], argv.slice(1));
+    } catch (error) {
+      process.stderr.write(`  => error: ${error.message}\n`);
+      process.exitCode = EXIT.error;
+    }
+    return;
+  }
   let options;
   try {
     options = parseArgs(process.argv.slice(2));
@@ -888,7 +900,7 @@ async function main() {
     process.exit(EXIT.error);
   }
   if (options.help) {
-    process.stdout.write(HELP);
+    process.stdout.write(HELP + VISUAL_HELP);
     return;
   }
   out.json = Boolean(options.json);
