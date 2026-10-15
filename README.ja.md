@@ -2,91 +2,37 @@
 
 [简体中文](README.md) · [繁體中文](README.zh-TW.md) · [English](README.en.md) · **日本語** · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md)
 
-**Chrome 拡張機能のアップデートを、コマンド 1 つで公開。**
-ビルド、zip 化、アップロード、審査への提出まで自動。アップロードの前に、ストアに却下されるかどうかを教えてくれます。
+**Chrome 拡張機能をウェブストアに載せて更新し続ける。初めての公開から毎回のリリースまで、コマンドラインで。**
 
-コマンドとしても、Claude Code / Codex のスキルとしても使えます。「拡張機能を公開して」と言うだけです。
+| 初めての公開 | ストア画像 | 毎回の更新 |
+|---|---|---|
+| コードを読み、ストアの説明文・権限の説明・プライバシーの回答をダッシュボードの順に用意。言語ごとに 1 フォルダ | スクリーンショット・アイコン・プロモ画像を、拡張機能自身の UI の色と書体で。ひとつの製品に見える | ビルド・パッケージ・アップロード・審査提出。**アップロード前に**ストアに却下されるかがわかる |
 
-> 公開済みの拡張機能は更新をそのまま公開できます。初めての公開では、`xxd-chrome-publish listing` がダッシュボードに入れる文章・権限の説明・プライバシーの回答・パッケージを掲載言語ごとに用意し、そのあと Chrome のダッシュボードでアイテムを作成して貼り付けます。
+コマンドとしても、Claude Code / Codex のスキルとしても使えます。「この拡張機能を公開して」「掲載資料を用意して」と言うだけです。
+MIT ライセンス。npm の依存はありません。スクリーンショットと画像作成のときだけ、playwright-core をローカルのキャッシュに自動で入れます。
 
-![Publish flow: every step before the upload can stop it](assets/diagrams/flow.en.svg)
-
-## 何が解決するか
-
-![The dashboard step moves to before the upload](assets/diagrams/before-after.en.svg)
+## なくなる手間
 
 | これまで | これから |
 |---|---|
-| アップロードは成功したのに、提出で *「does not meet the requirements」* | どの権限にダッシュボードで説明が必要か、コードのどの行で使っているかを先に教えてくれる |
-| あとから読み込むファイルが zip に入らず、機能が壊れる | 自動で見つけて同梱する |
-| 古いビルドをうっかりアップロード | 先にビルドとテストを実行。失敗したらアップロードしない |
-| バージョン番号がストアと重なって却下 | コードとストアの両方を見て、次のバージョンを決める |
-| どの拡張機能に未公開の変更があるか忘れる | 表 1 つで全部わかる |
-| 多言語パッケージをアップロードしても、他の言語のストアページは空のまま | 言語ごとに一覧表示し、ダッシュボードで確認するまでアップロードしない |
-| ライセンスファイルが zip に入らない | LICENSE、NOTICE、サードパーティのライセンスを自動で同梱 |
+| アップロードは成功、提出で *does not meet the requirements* | 事前チェックで、説明が必要な新しい権限と、それを使うコードの行を示す |
+| 権限の説明やデータ開示を手探りで書き、コードと食い違う | 先にコードを読む：各権限の用途、通信先のサーバー、リモートコードの有無 |
+| 13 言語のパッケージなのに、ストアページは 12 個が空 | 言語ごとに資料フォルダを用意し、リリース前に 1 つずつ確認。パッケージにまだない言語（日本語・韓国語・アラビア語…）も追加できる |
+| 幅 400px のサイドパネルが画面いっぱいに引き伸ばされたスクリーンショット | サイドパネルやポップアップはブラウザ画面の中で撮影。デモデータ・オフライン・本物のアカウントには触れない |
+| 拡張機能が使っていない色のプロモ画像 | 色・フォント・角丸を、拡張機能のページの実際の表示から読み取る |
+| 後から読み込むファイルやライブラリのライセンスが ZIP から漏れる | 見つけて一緒にパッケージする |
+| ストアにすでにあるバージョン番号 | コードとストアの両方から次のバージョンを決める |
+| どの拡張機能に未公開の変更があるかわからない | 1 枚の表で全部見える |
 
-## はじめかた
+## 実例
 
-**1. インストール**
+拡張機能「Cover Collage」で実際に作ったもの：
 
-```bash
-git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
-ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Claude のスキルとして（Codex は ~/.codex/skills）
-sh ~/code/xxd-chrome-publish/scripts/install.sh                       # コマンドとして
-```
+![プロモ画像：色・書体・角は拡張機能の UI から。主役は拡張機能が作るカバー](assets/examples/promo-marquee.en.png)
 
-**2. ストアのアカウントをつなぐ**（1 回だけ・[詳しい手順](references/setup.md)）
+![ストアのスクリーンショット：サイドパネルを、動作するサイトの横に戻して撮影](assets/examples/screenshot-sidepanel.png)
 
-```bash
-xxd-chrome-publish setup --publisher-id <ダッシュボード URL の ID> --service-account <サービスアカウントのメール>
-```
-
-**3. 拡張機能のフォルダごとに ID を登録**（1 回だけ）
-
-```bash
-cd my-extension
-xxd-chrome-publish bind --extension-id <拡張機能 ID またはストアのリンク>
-```
-
-**4. 公開**
-
-```bash
-xxd-chrome-publish
-```
-
-## よく使うコマンド
-
-| やりたいこと | コマンド |
-|---|---|
-| 何も変えずに、何が起きるか確認 | `xxd-chrome-publish preflight` |
-| アップデートを公開 | `xxd-chrome-publish` |
-| ダッシュボードを直してから再提出 | `xxd-chrome-publish submit` |
-| 審査状況を見る | `xxd-chrome-publish status` |
-| 未公開の変更がある拡張機能を探す | `xxd-chrome-publish scan ~/code` |
-| 設定が正しいか確認 | `xxd-chrome-publish doctor` |
-| 初めての公開：言語ごとにダッシュボード資料とパッケージを用意 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
-| ZIP だけ作る（`--patch` で先にバージョンを上げる） | `xxd-chrome-publish pack . --patch` |
-| プライバシーポリシーを公開ページにして URL を資料に入れる | `xxd-chrome-publish privacy-page .` |
-
-Claude Code / Codex なら頼むだけ：*「flomo の拡張機能を公開して」*、*「公開できる拡張機能はどれ？」*
-
-## ストア画像
-
-スクリーンショット、アイコン、プロモーション画像も作れます。拡張機能の UI と同じ一式になるよう、色・フォント・角丸は拡張機能の実際のページから読み取り、別の配色は作りません。プロモ画像の主役は拡張機能が実際にすること（作るものを作る拡張ならその成果物、サイト上で動く拡張なら「ページ + サイドパネル」）から選びます。
-
-| したいこと | コマンド |
-|---|---|
-| シナリオどおりにストア用スクリーンショットを撮る（サイドパネルやポップアップはブラウザ画面に戻して撮る） | `xxd-chrome-publish shots . --scenario shots.json` |
-| UI の色・フォント・角丸と現在のアイコンを読み取る | `xxd-chrome-publish style .` |
-| 16/32/48/128 アイコン、ストアアイコン、確認用シートを作る | `xxd-chrome-publish icon . --svg icon.svg` |
-| プロモ画像を書き出してレイアウトを検査する | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
-| サイズと透過を検査し、ストアページのプレビューを作る | `xxd-chrome-publish images .` |
-
-- `--locale ja` で日本語ストアページ用のスクリーンショット。撮影は既定でオフライン、デモデータのみ。
-- アップロードする画像はすべて透過なしの 24 ビット PNG で、デスクトップの `<拡張機能フォルダ>-store-assets/upload-files/` に入ります。
-- Google Chrome が必要です。初回に playwright-core を自動で入れます（`~/.cache` に。パッケージ自体は依存なしのまま）。
-
-## チェック結果の例
+公開前のチェック：
 
 ```
 $ xxd-chrome-publish preflight
@@ -99,61 +45,137 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
     [required] Justify the new host permissions
     open https://chrome.google.com/webstore/devconsole/…/edit/privacy
   => NEEDS DASHBOARD
-  stages
-    ✗ dashboard  NOT done — 1 required item above
-    ✗ package    not uploaded
-    ✗ review     not submitted
 ```
 
-この例では、新しいサイトへのアクセス権限が見つかりました。リンクを開き、なぜ必要かを 1 文書いて保存し、公開すれば完了です。最後の 3 行は、ダッシュボード保存・パッケージのアップロード・審査への提出を分けて表示します。やっていない段階が紛れることはありません。
+サイトへの権限が 1 つ増えました。リンクを開いて理由を一文書き、保存して公開するだけ。アップロード・提出・却下のあとで知ることはありません。
+
+![公開の流れ：アップロード前のどのステップでも止まれる](assets/diagrams/flow.en.svg)
+
+## はじめかた
+
+**1. インストール**（Node 18 以上）
+
+```bash
+git clone https://github.com/nevertoday/xxd-chrome-publish ~/code/xxd-chrome-publish
+sh ~/code/xxd-chrome-publish/scripts/install.sh                       # コマンドとして
+ln -s ~/code/xxd-chrome-publish ~/.claude/skills/xxd-chrome-publish   # Claude のスキルとして（Codex は ~/.codex/skills）
+```
+
+**2. ストアのアカウントなしでできること**：拡張機能のフォルダで
+
+```bash
+xxd-chrome-publish listing .        # 初めての公開の資料を用意
+xxd-chrome-publish style .          # UI の色・フォント・角丸を読み取る
+xxd-chrome-publish pack . --patch   # バージョンを上げて、アップロードできる ZIP を作る
+```
+
+**3. 公開するときは、ストアのアカウントをつなぐ**（1 回だけ・[手順](references/setup.md)）
+
+```bash
+xxd-chrome-publish setup --publisher-id <ダッシュボード URL の ID> --service-account <サービスアカウントのメール>
+# 拡張機能フォルダごとに 1 回
+xxd-chrome-publish bind --extension-id <拡張機能 ID またはストア URL>
+# 公開
+xxd-chrome-publish
+```
+
+## 3 つの場面と、そのコマンド
+
+### 初めての公開
+
+```bash
+xxd-chrome-publish listing . --locales ja,ko,ar   # コードを読み、パッケージし、ダッシュボード順のひな形を作る
+xxd-chrome-publish privacy-page .                 # プライバシーポリシーを公開し、URL を資料に入れる
+xxd-chrome-publish listing . --check              # 書き残し・Markdown・長すぎる概要・足りないファイルを検査
+```
+
+できあがるフォルダ（デスクトップに置き、ソースには入れない）：
+
+```
+<拡張機能フォルダ>-store-assets/
+├── fill-text.md               ダッシュボードの順に、上から貼り付け
+├── upload-files/              アイコン・スクリーンショット・プロモ画像・プライバシーページ・ZIP
+├── language-versions/<言語>/  掲載言語ごと：貼り付け用テキスト・詳しい説明・プライバシーポリシー
+└── working/listing-facts.md   根拠：各権限を使う行、通信先のサーバー
+```
+
+あとはダッシュボードでアイテムを作り、ZIP をアップロードして貼り付けます。ID ができたら `bind`。初回リリースでは、ログインの許可リスト・審査用テストアカウント・公開サポートページを先に確認します。
+
+### ストア画像
+
+| したいこと | コマンド |
+|---|---|
+| シナリオどおりにスクリーンショットを撮る（`--locale ja` で日本語版） | `xxd-chrome-publish shots . --scenario shots.json` |
+| アイコンとプロモ画像のために UI のスタイルを読む | `xxd-chrome-publish style .` |
+| 16/32/48/128 アイコン、ストアアイコン、確認用シートを作る | `xxd-chrome-publish icon . --svg icon.svg` |
+| プロモ画像を書き出し、はみ出し・切れ・折り返しを検査 | `xxd-chrome-publish tile promo.html --size 1400x560 --out promo.png` |
+| サイズと透過を検査し、ストアページをプレビュー | `xxd-chrome-publish images .` |
+
+アップロードする画像はすべて、ストアの求める透過なしの 24 ビット PNG です。スクリーンショットには Google Chrome が必要で、初回に playwright-core を `~/.cache` に入れます。
+
+### 毎回の更新
+
+| したいこと | コマンド |
+|---|---|
+| 何が起きるか見るだけ（何も変えない） | `xxd-chrome-publish preflight` |
+| 更新を公開 | `xxd-chrome-publish` |
+| ダッシュボードを直して再提出 | `xxd-chrome-publish submit` |
+| 審査の状況 | `xxd-chrome-publish status` |
+| フォルダ内のどの拡張機能に未公開の変更があるか | `xxd-chrome-publish scan ~/code` |
+| アカウント設定の確認 | `xxd-chrome-publish doctor` |
+
+## AI アシスタントで使う
+
+スキルとして入れたら、そのまま話しかけます：
+
+- 「flomo の拡張機能を公開して」「公開できる拡張機能はどれ？」
+- 「この拡張機能の掲載資料を、日本語・韓国語・アラビア語でも用意して」
+- 「UI に合わせたスクリーンショット 5 枚とプロモ画像を作って」
+
+公開のたびに、決まった形式のレポートで 3 つの事実を分けて伝えます：ダッシュボードを保存したか、パッケージをアップロードしたか、審査に提出したか。提出を「公開済み」とは言いません。公開は Google の承認のあとです。
 
 ## できないこと
 
-![What the tool does, and what only you can do](assets/diagrams/roles.en.svg)
+![ツールがやること、あなたにしかできないこと](assets/diagrams/roles.en.svg)
 
-次のものは Google に API がないため、Chrome のダッシュボードで操作します。
+Google がこれらの API を用意していないため、Chrome デベロッパー ダッシュボードで行います：アイテムの作成、説明文とプライバシー回答の貼り付け、画像のアップロード。ツールは貼り付けるテキストと画像を順番どおりに用意し、ダッシュボードのリンクを示します。Chrome は拡張機能からストアのページを操作させないため、拡張機能の中の AI アシスタントには入力できません。パソコンを直接操作できる AI なら、入力・保存し、項目ごとに読み返せます。
 
-- アイテムの作成と掲載資料の貼り付け（資料は `listing` が用意します。新しい ID ができたら、ここでの初回リリース前に、ログインの許可リスト・審査用テストアカウント・公開サポートページを確認します）
-- ストアの説明文とスクリーンショット（言語ごとに 1 ページ）
-- プライバシータブ：権限の説明、データの使い方、プライバシーポリシーのリンク
-
-何をどこに入力すればいいかは、ツールが正確に教えてくれます。Chrome は拡張機能がストアのページを操作することを禁止しているので、ブラウザ拡張として動く AI エージェントには入力できません。一方、パソコンを直接操作できる AI なら、入力・アップロード・保存をしたうえで、ページを読み直して確認できます。
-
-## 詳細（クリックで開く）
+## 詳細
 
 <details>
-<summary><b>ログイン方法：2 つから選ぶ</b></summary>
+<summary><b>ログイン方法：どちらか 1 つ</b></summary>
 
 | 方法 | 向いている場面 | 必要なもの |
 |---|---|---|
-| gcloud + サービスアカウント | 自分のパソコン。秘密鍵ファイル不要 | Google Cloud SDK、サービスアカウント |
-| OAuth リフレッシュトークン | CI（GitHub Actions など） | 環境変数 `CWS_CLIENT_ID`、`CWS_CLIENT_SECRET`、`CWS_REFRESH_TOKEN` |
+| gcloud + サービスアカウント | 自分のパソコン。鍵ファイルを置かない | Google Cloud SDK とサービスアカウント |
+| OAuth リフレッシュトークン | CI（GitHub Actions など） | `CWS_CLIENT_ID`、`CWS_CLIENT_SECRET`、`CWS_REFRESH_TOKEN` |
 
-⚠️ サービスアカウントはダッシュボードの Account ページにある **service account** 欄に入れます。「Trusted tester accounts」**ではありません**。そちらには API の権限がなく、403 エラーになります。
+⚠️ サービスアカウントはダッシュボードの Account ページの **service account** 欄に入れます。隣の “Trusted tester accounts” **ではありません**。そちらには API 権限がなく、403 が続きます。
 
-詳しい手順：[references/setup.md](references/setup.md)
+手順：[references/setup.md](references/setup.md)
 
 </details>
 
 <details>
-<summary><b>すべてのオプション</b></summary>
+<summary><b>公開のオプション一覧</b></summary>
 
-| オプション | 動作 |
+| オプション | 内容 |
 |---|---|
-| `--minor` / `--major` | 1.2.3 → 1.3.0 / 2.0.0（標準は 1.2.4） |
-| `--set-version 1.5.0` | このバージョンをそのまま使う |
-| `--no-bump` | manifest.json のバージョンを変えない |
-| `--skip-build` / `--skip-checks` | ビルド / テストを実行しない |
-| `--dashboard-ready` | ダッシュボードは入力済み。そのまま進める |
-| `--cancel-pending` | 審査中のバージョンを取り下げて、こちらを提出 |
-| `--upload-only` | アップロードだけして提出しない |
-| `--staged` | 承認後すぐ公開せず、あなたの操作を待つ |
-| `--zip file.zip` | zip を作らず、このファイルをアップロード |
-| `--commit` | 公開後に新しいバージョン番号を git にコミット |
-| `--json` | プログラムで読みやすい JSON で出力 |
-| `--lang zh` / `--lang en` | 最後の REPORT ブロックの言語と、ZIP のファイル名に使うストア名の言語（Google に表示される名前）。既定はシステムの言語 |
+| `--minor` / `--major` | 1.2.3 → 1.3.0 / 2.0.0（既定は 1.2.4） |
+| `--set-version 1.5.0` | このバージョンにする |
+| `--no-bump` | manifest.json のバージョンのまま |
+| `--skip-build` / `--skip-checks` | ビルド / チェックのスクリプトを実行しない |
+| `--dashboard-ready` | ダッシュボードは完了。続ける |
+| `--cancel-pending` | 審査中のバージョンを取り下げ、これを提出 |
+| `--upload-only` | アップロードのみ、提出しない |
+| `--staged` | 承認後、あなたが公開するまで待つ |
+| `--zip file.zip` | パッケージせず、この ZIP をアップロード |
+| `--commit` | 公開後、バージョンの変更を git にコミット |
+| `--json` | 機械向けの出力 |
+| `--lang zh` / `--lang en` | 最後のレポートの言語と、ZIP のファイル名に使うストア名の言語。既定はシステムの言語 |
 
-終了コード：`0` 完了 · `1` エラー · `2` 別のバージョンが審査中 · `3` 先にダッシュボードの入力が必要
+終了コード：`0` 完了 · `1` エラー · `2` 別のバージョンが審査中 · `3` 先にダッシュボードの作業。
+ストア画像コマンドのオプション：`xxd-chrome-publish --help`。
 
 </details>
 
@@ -173,11 +195,21 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 
 | 項目 | 意味 |
 |---|---|
-| `extensionId` | ストアのリンクにある 32 文字の ID |
-| `build` | ビルドコマンド、または `false`。標準は package.json の `build` スクリプト |
-| `check` | テストコマンド、または `false`。標準は package.json の `check` スクリプト |
-| `packageDir` | zip にするフォルダ。ビルド結果が `dist` などに出る場合に指定 |
-| `include` / `exclude` | 必ず入れる / 絶対に入れないファイル |
+| `extensionId` | ストア URL の 32 文字 |
+| `build` | ビルドコマンド、または `false`。既定は package.json の `build` スクリプト |
+| `check` | テストコマンド、または `false`。既定は package.json の `check` スクリプト |
+| `packageDir` | パッケージするフォルダ（ビルド出力が `dist` ならそれ） |
+| `include` / `exclude` | 必ず入れる / 必ず除くファイル |
+
+</details>
+
+<details>
+<summary><b>審査担当者への書き方と、エラーへの対処</b></summary>
+
+- 初めての公開の各項目：[references/first-listing.md](references/first-listing.md)
+- スクリーンショットのシナリオ：[references/screenshots.md](references/screenshots.md) · アイコンとプロモ画像：[references/store-images.md](references/store-images.md)
+- 通りやすい権限の説明：[references/dashboard.md](references/dashboard.md)
+- エラーと対処：[references/troubleshooting.md](references/troubleshooting.md)
 
 </details>
 
@@ -185,13 +217,10 @@ Image Crop Tool · ~/code/crop · phdjhhjbapkmagifbejfabimojmjngbe
 <summary><b>更新と開発</b></summary>
 
 ```bash
-git -C ~/code/xxd-chrome-publish pull   # 更新（スキルのリンクもコマンドもここを指している）
-npm test                                 # テスト実行（ローカルの偽ストアを使うので実際には公開されない）
-npm run diagrams                         # 図を作り直す（build.mjs の文言を変えたあと）
+git -C ~/code/xxd-chrome-publish pull   # 更新（スキルのリンクもコマンドもここを指す）
+npm test                                # ローカルの偽ストアでテスト。何も公開されない
+npm run diagrams                        # build.mjs の文言を変えたら図を作り直す
 ```
-
-審査に通りやすい権限の説明の書き方：[references/dashboard.md](references/dashboard.md) ·
-エラーと対処法：[references/troubleshooting.md](references/troubleshooting.md)
 
 </details>
 
