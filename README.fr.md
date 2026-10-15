@@ -65,6 +65,8 @@ xxd-chrome-publish
 | Voir quelles extensions ont des changements non publiés | `xxd-chrome-publish scan ~/code` |
 | Vérifier que la configuration marche | `xxd-chrome-publish doctor` |
 | Première publication : préparer le contenu du tableau de bord et le paquet par langue | `xxd-chrome-publish listing . --locales ja,ko,ar` |
+| Juste un ZIP (`--patch` augmente d'abord la version) | `xxd-chrome-publish pack . --patch` |
+| Publier la politique de confidentialité en page publique et reporter son URL | `xxd-chrome-publish privacy-page .` |
 
 Dans Claude Code / Codex, demandez simplement : *« publie l'extension flomo »*, *« quelles extensions puis-je publier ? »*
 

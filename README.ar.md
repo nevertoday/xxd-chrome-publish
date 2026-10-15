@@ -83,6 +83,8 @@ xxd-chrome-publish
 | تعرف أي الإضافات فيها تغييرات لم تُنشر | `xxd-chrome-publish scan ~/code` |
 | تتأكد أن الإعداد يعمل | `xxd-chrome-publish doctor` |
 | النشر لأول مرة: تجهيز مواد لوحة التحكم والحزمة لكل لغة | `xxd-chrome-publish listing . --locales ja,ko,ar` |
+| ملف ZIP فقط (`--patch` يرفع رقم الإصدار أولًا) | `xxd-chrome-publish pack . --patch` |
+| نشر سياسة الخصوصية كصفحة عامة وإدراج رابطها | `xxd-chrome-publish privacy-page .` |
 
 في Claude Code / Codex اطلب فقط: *«انشر إضافة flomo»*، *«أي إضافاتي جاهزة للنشر؟»*
 

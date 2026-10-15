@@ -169,11 +169,13 @@ gives you; never invent one — leave `[CONTACT EMAIL]` and say so.
 
 Write `language-versions/<locale>/privacy-policy.md` per language (plain text), and
 `upload-files/privacy-page/index.html`: the default-language policy as a plain, readable page.
-It needs a public URL. GitHub Pages is the simplest host, but creating a public repository and
-publishing is visible to everyone: **ask the user first**, then with their GitHub account
-`gh repo create <name>-privacy --public`, push `index.html`, enable Pages from `main` /
-(root), and use `https://<user>.github.io/<name>-privacy/`. Put the final URL into every
-`fill-text.md`, and check it opens without signing in.
+It needs a public URL. `xxd-chrome-publish privacy-page <dir>` publishes it on GitHub Pages: a
+public repository `<english-name>-privacy` under the signed-in `gh` account (`--repo NAME` when
+the name isn't Latin, `--owner USER` for an organisation), `index.html` pushed to `main`, Pages
+served from `main` / (root), then it waits until `https://<user>.github.io/<repo>/` opens
+publicly with this version and writes that URL into every `fill-text.md`. Rerunning it after an
+edit updates the same page. It is visible to everyone: run it when the user asked for it or has
+said privacy pages may be published; otherwise ask first.
 
 ## 3. Distribution (`edit/distribution`)
 

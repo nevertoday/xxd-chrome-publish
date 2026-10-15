@@ -17,7 +17,9 @@ description: >
   promo tile、marquee、store screenshots, or making the store images match the UI. And for a
   first listing: 上架资料、提交资料、提审文案、权限说明、隐私政策、数据披露、准备上架、生成提审材料、
   Web Store listing / submission materials, or /cx-chrome-store-submission — it prepares the store
-  text, privacy answers and permission justifications from the code, in every listing language.
+  text, privacy answers and permission justifications from the code, in every listing language,
+  and publishes the privacy page. Also for just a ZIP: 打包插件、打个 ZIP、插件打包、升版本号打包,
+  /cx-chrome-zip — `pack` (with --patch/--minor/--major to bump the version first).
 ---
 
 # xxd-chrome-publish
@@ -109,9 +111,11 @@ Read [references/first-listing.md](references/first-listing.md) before writing a
 2. Read the code behind the facts, then replace every `TODO` in every language: plain text in the
    paste blocks, every permission and the hosts justified from their call sites, data use decided
    from what the code sends where. Write `full-submission.md` and `privacy-policy.md` per language
-   and `upload-files/privacy-page/index.html`. Publishing the privacy page (e.g. a public GitHub
-   Pages repo) is visible to everyone — ask first. Right-to-left languages (ar, he, fa, ur) get
-   `dir="rtl"` on the privacy page and promo tiles.
+   and `upload-files/privacy-page/index.html`. `privacy-page <dir>` publishes it on GitHub Pages
+   (a public `<name>-privacy` repo under the user's `gh` account), waits until it opens publicly
+   and writes the URL into every `fill-text.md`. That is visible to everyone: run it when the user
+   asked for it or has said privacy pages may be published. Right-to-left languages (ar, he, fa,
+   ur) get `dir="rtl"` on the privacy page and promo tiles.
 3. Make the store images (next section) into the same `upload-files/`.
 4. `listing <dir> --check` until it says READY. A language marked "not in the package yet" has no
    dashboard page until `_locales/<locale>/messages.json` ships in the package — say so; don't add
@@ -280,6 +284,7 @@ version, review state, commits since `manifest.json`'s version last changed, and
 | `cancel [dir]` / `rollout N [dir]` | withdraw the submission / raise rollout % |
 | `bind`, `setup`, `doctor` | configuration |
 | `listing [dir]` / `listing --check` | first-listing material (above) |
+| `privacy-page [dir]` | publish the privacy page on GitHub Pages, fill its URL in |
 | `shots`, `style`, `icon`, `tile`, `images`, `demo-images` | store images (above); `<command> --help` |
 
 Useful flags: `--minor`/`--major`, `--set-version X`, `--no-bump`, `--skip-build`,

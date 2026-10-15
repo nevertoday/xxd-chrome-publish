@@ -142,3 +142,94 @@ test("listing: scaffold in dashboard order per language, then --check until it i
   assert.match(rerun.stdout, /not overwritten/);
   assert.match(fs.readFileSync(path.join(dir, "language-versions/en/fill-text.md"), "utf8"), /Plain answer written from the code/);
 });
+
+// ---------- privacy page ----------
+
+import http from "node:http";
+import { execFileSync } from "node:child_process";
+import { privacyRepoName, setPrivacyUrl } from "../scripts/lib/privacy-page.mjs";
+
+test("privacy page: repository name from the English listing name; URL into the paste block", () => {
+  assert.equal(privacyRepoName("XXD Cover Collage - WeChat covers from a few pictures"), "xxd-cover-collage-privacy");
+  assert.equal(privacyRepoName("小小东 · 封面拼图"), "");
+  const text = "### Privacy policy URL\n\nnote\n\n```text\nTODO: a public URL\n```\n\n### Next\n\n```text\nkeep\n```";
+  const next = setPrivacyUrl(text, "https://me.github.io/x-privacy/");
+  assert.match(next, /```text\nhttps:\/\/me\.github\.io\/x-privacy\/\n```/);
+  assert.match(next, /```text\nkeep\n```/);
+});
+
+test("privacy-page: creates the repo, pushes, enables Pages, waits until live, fills every language", async () => {
+  // a fake gh over a local bare repository, and a local "GitHub Pages" serving its main branch
+  const sandbox = tempDir("xcp-gh-");
+  const bare = path.join(sandbox, "remote.git");
+  const server = http.createServer((request, response) => {
+    try {
+      response.end(execFileSync("git", ["-C", bare, "show", "main:index.html"]));
+    } catch {
+      response.writeHead(404).end();
+    }
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const pagesUrl = `http://127.0.0.1:${server.address().port}/`;
+  const bin = path.join(sandbox, "bin");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "gh"), `#!/usr/bin/env node
+const fs = require("fs"), { execFileSync } = require("child_process");
+const a = process.argv.slice(2), state = ${JSON.stringify(sandbox)} + "/state.json";
+const s = fs.existsSync(state) ? JSON.parse(fs.readFileSync(state, "utf8")) : {};
+const save = () => fs.writeFileSync(state, JSON.stringify(s));
+const log = (x) => fs.appendFileSync(${JSON.stringify(sandbox)} + "/calls.log", x + "\\n");
+log(a.join(" "));
+if (a[0] === "auth") process.exit(0);
+if (a[0] === "api" && a[1] === "user") { console.log("tester"); process.exit(0); }
+if (a[0] === "repo" && a[1] === "view") process.exit(s.created ? 0 : 1);
+if (a[0] === "repo" && a[1] === "create") { execFileSync("git", ["init", "--bare", "-q", "-b", "main", ${JSON.stringify(bare)}]); s.created = true; save(); process.exit(0); }
+if (a[0] === "repo" && a[1] === "clone") { execFileSync("git", ["clone", "-q", ${JSON.stringify(bare)}, a[3]], { stdio: "ignore" }); process.exit(0); }
+if (a[0] === "api" && a.includes("POST")) { s.pages = true; save(); process.exit(0); }
+if (a[0] === "api" && a[1].endsWith("/pages")) { if (!s.pages) process.exit(1); if (a.includes("-q")) console.log(${JSON.stringify(pagesUrl)}); process.exit(0); }
+process.exit(2);
+`, { mode: 0o755 });
+
+  try {
+    const ext = fixture();
+    const base = tempDir();
+    await runCli(["listing", ext, "--output-dir", base, "--locales", "ja"]);
+    const dir = path.join(base, `${path.basename(ext)}-store-assets`);
+    fs.mkdirSync(path.join(dir, "upload-files", "privacy-page"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "upload-files", "privacy-page", "index.html"), "<h1>Clipper privacy policy</h1><p>Nothing leaves your browser.</p>");
+    const env = {
+      PATH: `${bin}:${process.env.PATH}`,
+      GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@example.com", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@example.com",
+    };
+    const result = await runCli(["privacy-page", ext, "--output-dir", base], { env });
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /created https:\/\/github\.com\/tester\/clipper-privacy \(public\)/);
+    assert.match(result.stdout, /live\s+yes/);
+    for (const relative of ["fill-text.md", "language-versions/en/fill-text.md", "language-versions/ja/fill-text.md"]) {
+      assert.match(fs.readFileSync(path.join(dir, relative), "utf8"), new RegExp(`Privacy policy URL[\\s\\S]*?\`\`\`text\\n${pagesUrl.replace(/[.]/g, "\\.")}\\n`), relative);
+    }
+    // running it again changes nothing on the remote
+    const again = await runCli(["privacy-page", ext, "--output-dir", base], { env });
+    assert.match(again.stdout, /\(exists\)/);
+    assert.match(again.stdout, /index\.html unchanged/);
+  } finally {
+    server.close();
+  }
+});
+
+test("pack --patch bumps manifest.json (and a package.json on the same version) before packing; plain pack doesn't", async () => {
+  const ext = writeTree(tempDir(), {
+    "manifest.json": baseManifest({ version: "1.2.3" }),
+    "package.json": { name: "x", version: "1.2.3" },
+    "background.js": "",
+  });
+  const out = tempDir();
+  const bumped = await runCli(["pack", ext, "--output-dir", out, "--patch"]);
+  assert.equal(bumped.code, 0, bumped.stdout + bumped.stderr);
+  assert.match(bumped.stdout, /1\.2\.3 → 1\.2\.4/);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(ext, "manifest.json"), "utf8")).version, "1.2.4");
+  assert.equal(JSON.parse(fs.readFileSync(path.join(ext, "package.json"), "utf8")).version, "1.2.4");
+  assert.ok(fs.readdirSync(out).some((file) => file.endsWith("v1.2.4.zip")));
+  await runCli(["pack", ext, "--output-dir", out]);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(ext, "manifest.json"), "utf8")).version, "1.2.4");
+});

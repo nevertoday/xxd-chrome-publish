@@ -65,6 +65,8 @@ xxd-chrome-publish
 | 未公開の変更がある拡張機能を探す | `xxd-chrome-publish scan ~/code` |
 | 設定が正しいか確認 | `xxd-chrome-publish doctor` |
 | 初めての公開：言語ごとにダッシュボード資料とパッケージを用意 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
+| ZIP だけ作る（`--patch` で先にバージョンを上げる） | `xxd-chrome-publish pack . --patch` |
+| プライバシーポリシーを公開ページにして URL を資料に入れる | `xxd-chrome-publish privacy-page .` |
 
 Claude Code / Codex なら頼むだけ：*「flomo の拡張機能を公開して」*、*「公開できる拡張機能はどれ？」*
 

@@ -14,7 +14,7 @@ import {
 import { diffManifests, dashboardActions, findPermissionUsage, draftJustification } from "./lib/manifest-diff.mjs";
 import { buildReport, reportLanguage } from "./lib/report.mjs";
 import { packageExtension, displayName, setManifestVersionText, isLicenseFile } from "./lib/packager.mjs";
-import { planVersion, compareVersions, maxVersion } from "./lib/version.mjs";
+import { planVersion, compareVersions, maxVersion, bumpVersion } from "./lib/version.mjs";
 import { readZip } from "./lib/zip.mjs";
 import { checkVendored } from "./lib/vendored.mjs";
 import { localeInfo, listingActions, folderReader, zipReader } from "./lib/locales.mjs";
@@ -30,9 +30,10 @@ import { VISUAL_COMMANDS, VISUAL_HELP, runVisualCommand } from "./lib/visuals/co
 import { storeAssetsDir } from "./lib/visuals/pages.mjs";
 import { listingFacts, listingLanguages, missingFromPackage, fillTextSkeleton, readmeText, checkListingFolder } from "./lib/listing.mjs";
 import { collectFiles } from "./lib/packager.mjs";
+import { privacyRepoName, setPrivacyUrl, publishPrivacyPage } from "./lib/privacy-page.mjs";
 
 const EXIT = { ok: 0, error: 1, blocked: 2, dashboard: 3 };
-const COMMANDS = ["publish", "preflight", "pack", "submit", "status", "scan", "cancel", "rollout", "bind", "setup", "doctor", "listing"];
+const COMMANDS = ["publish", "preflight", "pack", "submit", "status", "scan", "cancel", "rollout", "bind", "setup", "doctor", "listing", "privacy-page"];
 
 const HELP = `${TOOL} — update an already-listed Chrome extension from the command line
 
@@ -53,11 +54,15 @@ First listing (nothing published yet)
                --locales ja,ko,ar  also prepare these listing languages (the package needs
                their _locales before the dashboard shows their pages); --lang zh adds a
                Chinese reading copy when Chinese isn't a listing language
+  privacy-page publish upload-files/privacy-page/index.html as a public GitHub Pages site
+               (repo <name>-privacy under your gh account; --repo NAME, --owner USER), wait until
+               it opens publicly, and write the URL into every fill-text.md
   listing --check   check the finished folder before pasting: TODOs left, every permission
                covered, plain-text paste blocks, summary length, upload files present
 
 Other
-  pack         build + package only (no network)
+  pack         build + package only (no network); with --patch/--minor/--major it first bumps
+               the version in manifest.json (and package.json when it tracks the same version)
   cancel       withdraw the submission that is in review
   rollout N    raise the published revision's rollout to N percent
   bind         save the extension ID in <dir>/${LOCAL_CONFIG}
@@ -113,7 +118,7 @@ function parseArgs(argv) {
   const values = {
     "--extension-id": "extensionId", "--publisher-id": "publisherId", "--service-account": "serviceAccount",
     "--gcloud": "gcloud", "--output-dir": "outputDir", "--set-version": "setVersion", "--zip": "zip",
-    "--percentage": "percentage", "--lang": "lang", "--locales": "locales",
+    "--percentage": "percentage", "--lang": "lang", "--locales": "locales", "--repo": "repo", "--owner": "owner",
   };
   // Older flag spellings map onto commands.
   const legacy = { "--status": "status", "--doctor": "doctor", "--dry-run": "pack", "--bind": "bind", "--setup": "setup" };
@@ -123,7 +128,10 @@ function parseArgs(argv) {
     if (arg === "-h" || arg === "--help") options.help = true;
     else if (arg in flags) options[flags[arg]] = true;
     else if (arg in legacy) options.legacyCommands = [...(options.legacyCommands || []), legacy[arg]];
-    else if (["--patch", "--minor", "--major"].includes(arg)) options.bump = arg.slice(2);
+    else if (["--patch", "--minor", "--major"].includes(arg)) {
+      options.bump = arg.slice(2);
+      options.bumpExplicit = true;
+    }
     else if (arg in values) {
       const value = argv[index + 1];
       if (value === undefined || value.startsWith("--")) {
@@ -705,6 +713,20 @@ async function cmdPack(options) {
   const root = resolveRoot(options.dir);
   const local = loadLocalConfig(root);
   const commands = projectCommands(root, local);
+  // pack --patch/--minor/--major bumps the source version first (a build then picks it up);
+  // without them pack never touches the source
+  const sourceManifest = path.join(root, "manifest.json");
+  if (options.bumpExplicit && !options.setVersion && fs.existsSync(sourceManifest)) {
+    const text = fs.readFileSync(sourceManifest, "utf8");
+    const from = JSON.parse(text).version;
+    const to = bumpVersion(from, options.bump);
+    fs.writeFileSync(sourceManifest, setManifestVersionText(text, to));
+    const packageJson = path.join(root, "package.json");
+    if (fs.existsSync(packageJson) && JSON.parse(fs.readFileSync(packageJson, "utf8")).version === from) {
+      fs.writeFileSync(packageJson, setManifestVersionText(fs.readFileSync(packageJson, "utf8"), to));
+    }
+    out.row("version", `${from} → ${to} (manifest.json)`);
+  }
   if (commands.build && !options.skipBuild) {
     out.row("build", `${commands.build} …`);
     const run = runCommand(commands.build, root);
@@ -837,6 +859,49 @@ async function cmdListing(options) {
   out.line("  => next: replace every TODO from the facts (references/first-listing.md), write full-submission.md and");
   out.line("     privacy-policy.md per language, the privacy page and the store images, then `listing --check`");
   return { code: EXIT.ok, result: { dir, facts, languages, zipPath: packed.result.zipPath, written, kept } };
+}
+
+async function cmdPrivacyPage(options) {
+  const { config } = loadGlobalConfig();
+  const root = resolveRoot(options.dir);
+  const local = loadLocalConfig(root);
+  const packageRoot = path.resolve(root, local.packageDir || ".");
+  const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, "manifest.json"), "utf8"));
+  const dir = storeAssetsDir(root, options.outputDir ? path.resolve(options.outputDir) : defaultOutputDir(config));
+  const info = localeInfo(manifest, folderReader(packageRoot));
+  const english = info.locales.find((entry) => entry.locale.startsWith("en"))?.name;
+  const name = info.locales.find((entry) => entry.isDefault)?.name || manifest.name;
+  const repo = options.repo || privacyRepoName(english || name);
+  if (!repo) throw new Error("can't make a repository name from a non-Latin name: pass --repo NAME (e.g. cover-collage-privacy)");
+
+  const published = await publishPrivacyPage({
+    page: path.join(dir, "upload-files", "privacy-page", "index.html"),
+    owner: options.owner,
+    repo,
+    title: name,
+    log: (label, text) => out.row(label, text),
+  });
+  // the URL goes into every language's "Privacy policy URL" field
+  const fillTexts = [path.join(dir, "fill-text.md")];
+  const versions = path.join(dir, "language-versions");
+  if (fs.existsSync(versions)) {
+    for (const locale of fs.readdirSync(versions)) fillTexts.push(path.join(versions, locale, "fill-text.md"));
+  }
+  const updated = [];
+  for (const file of fillTexts.filter((item) => fs.existsSync(item))) {
+    const text = fs.readFileSync(file, "utf8");
+    const next = setPrivacyUrl(text, published.url);
+    if (next !== text) {
+      fs.writeFileSync(file, next);
+      updated.push(path.relative(dir, file));
+    }
+  }
+  fs.mkdirSync(path.join(dir, "working"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "working", "privacy-url.txt"), `${published.url}\n`);
+  out.row("url", published.url);
+  out.row("live", published.live ? "yes — opens publicly with this version" : "not yet — GitHub Pages is still building; rerun in a few minutes to check");
+  if (updated.length) out.row("filled", `Privacy policy URL in ${updated.join(", ")}`);
+  return { code: published.live ? EXIT.ok : EXIT.error, result: { ...published, updated } };
 }
 
 async function cmdCancel(options) {
@@ -1032,7 +1097,7 @@ async function main() {
   if (options.lang) process.env.XXD_CHROME_PUBLISH_LANG = options.lang;
   const handlers = {
     publish: cmdPublish, preflight: cmdPublish, submit: cmdSubmit, status: cmdStatus, scan: cmdScan,
-    pack: cmdPack, listing: cmdListing, cancel: cmdCancel, rollout: cmdRollout, bind: cmdBind, setup: cmdSetup, doctor: cmdDoctor,
+    pack: cmdPack, listing: cmdListing, "privacy-page": cmdPrivacyPage, cancel: cmdCancel, rollout: cmdRollout, bind: cmdBind, setup: cmdSetup, doctor: cmdDoctor,
   };
   let code = EXIT.ok;
   let result = null;

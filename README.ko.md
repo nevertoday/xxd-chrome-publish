@@ -65,6 +65,8 @@ xxd-chrome-publish
 | 배포 안 한 변경이 있는 확장 프로그램 찾기 | `xxd-chrome-publish scan ~/code` |
 | 설정이 맞는지 확인 | `xxd-chrome-publish doctor` |
 | 처음 등록: 언어별 대시보드 자료와 패키지 준비 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
+| ZIP만 만들기 (`--patch`로 버전을 먼저 올림) | `xxd-chrome-publish pack . --patch` |
+| 개인정보처리방침을 공개 페이지로 게시하고 URL을 자료에 넣기 | `xxd-chrome-publish privacy-page .` |
 
 Claude Code / Codex에서는 말만 하세요: *"flomo 확장 프로그램 배포해 줘"*, *"배포할 수 있는 확장 프로그램 뭐 있어?"*
 

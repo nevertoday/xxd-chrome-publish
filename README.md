@@ -65,6 +65,8 @@ xxd-chrome-publish
 | 看哪些插件有改动还没发 | `xxd-chrome-publish scan ~/code` |
 | 检查配置对不对 | `xxd-chrome-publish doctor` |
 | 第一次上架：按语言准备后台资料和安装包 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
+| 只打一个 ZIP（加 `--patch` 先把版本号加一） | `xxd-chrome-publish pack . --patch` |
+| 把隐私政策发布成公开网页，网址自动填进资料 | `xxd-chrome-publish privacy-page .` |
 
 在 Claude Code / Codex 里直接说就行：*“把 flomo 那个插件发了”*、*“看看哪些插件可以发”*。
 

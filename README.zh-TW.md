@@ -65,6 +65,8 @@ xxd-chrome-publish
 | 看哪些擴充功能有變更還沒發布 | `xxd-chrome-publish scan ~/code` |
 | 檢查設定對不對 | `xxd-chrome-publish doctor` |
 | 第一次上架：依語言準備資訊主頁資料和安裝包 | `xxd-chrome-publish listing . --locales ja,ko,ar` |
+| 只打一個 ZIP（加 `--patch` 先把版本號加一） | `xxd-chrome-publish pack . --patch` |
+| 把隱私權政策發布成公開網頁，網址自動填進資料 | `xxd-chrome-publish privacy-page .` |
 
 在 Claude Code / Codex 裡直接說就好：*「把 flomo 那個擴充功能發布出去」*、*「看看哪些擴充功能可以發布」*。
 
