@@ -204,6 +204,31 @@ export function collectFiles(rootDir, manifest, options = {}) {
         if (next) addPath(next);
       }
     }
+    // Template literals: `editor/editor.html?file=${x}` names the file before the
+    // query; `core/i18n/${lang}.js` names every file of that shape in the folder.
+    for (const match of content.matchAll(/`([^`]*\$\{[^`]*)`/g)) {
+      const raw = match[1];
+      const head = raw.slice(0, raw.indexOf("${"));
+      const query = head.search(/[?#]/);
+      if (query > 0) {
+        const hit = [normalizeRelative(head.slice(0, query)), resolveFrom(file, head.slice(0, query))]
+          .find((candidate) => candidate && exists(candidate) && fs.statSync(path.join(rootDir, candidate)).isFile());
+        if (hit) addFile(hit);
+        continue;
+      }
+      const slash = head.lastIndexOf("/");
+      const tail = raw.slice(raw.lastIndexOf("}") + 1).match(/^([\w.-]*\.[a-z0-9]+)(?:[?#]|$)/i);
+      if (slash <= 0 || !tail) continue;
+      const prefix = head.slice(slash + 1);
+      const dir = [normalizeRelative(head.slice(0, slash)), resolveFrom(file, head.slice(0, slash))]
+        .find((candidate) => candidate && exists(candidate) && fs.statSync(path.join(rootDir, candidate)).isDirectory());
+      if (!dir) continue;
+      for (const entry of fs.readdirSync(path.join(rootDir, dir), { withFileTypes: true })) {
+        if (entry.isFile() && entry.name.startsWith(prefix) && entry.name.endsWith(tail[1]) && entry.name.length > prefix.length + tail[1].length) {
+          addFile(`${dir}/${entry.name}`);
+        }
+      }
+    }
     // Extension APIs resolve bare paths from the extension root, so try that first.
     for (const match of content.matchAll(LITERAL_PATH)) {
       const raw = match[1];

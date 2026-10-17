@@ -301,6 +301,29 @@ test("packager ships licences nothing references (the vendor/*.LICENSE that went
   assert.deepEqual(unlicensed, []);
 });
 
+test("packager follows template-literal paths (the core/i18n/${lang}.js that went missing)", () => {
+  const dir = writeTree(tempDir(), {
+    "manifest.json": baseManifest(),
+    "background.js": [
+      "importScripts(...langs.map((lang) => `core/i18n/${lang}.js`));",
+      "chrome.tabs.create({ url: chrome.runtime.getURL(`editor/editor.html?file=${encodeURIComponent(p)}`) });",
+    ].join("\n"),
+    "core/i18n/en.js": "",
+    "core/i18n/zh-TW.js": "",
+    "core/i18n/notes.txt": "",
+    "editor/editor.html": '<script src="editor.js"></script>',
+    "editor/editor.js": "",
+    "editor/unused.js": "",
+  });
+  const { files } = collectFiles(dir, JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"))));
+  for (const expected of ["core/i18n/en.js", "core/i18n/zh-TW.js", "editor/editor.html", "editor/editor.js"]) {
+    assert.ok(files.includes(expected), `missing ${expected}`);
+  }
+  for (const unexpected of ["core/i18n/notes.txt", "editor/unused.js"]) {
+    assert.ok(!files.includes(unexpected), `should not ship ${unexpected}`);
+  }
+});
+
 test("third-party files without a licence are reported; a header comment counts", () => {
   const dir = writeTree(tempDir(), {
     "manifest.json": baseManifest(),
